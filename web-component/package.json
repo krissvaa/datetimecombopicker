@@ -4,11 +4,6 @@
   "description": "A combined date & time picker web component: a single field with one popup containing a calendar and MUI-style scrollable time columns. The date-time format pattern drives which time parts are shown.",
   "license": "Apache-2.0",
   "author": "DateTimeComboPicker contributors",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/krissvaadin/datetimecombopicker.git",
-    "directory": "web-component"
-  },
   "keywords": [
     "vaadin",
     "web-component",

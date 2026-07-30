@@ -24,6 +24,11 @@ flow/vite.generated.ts
 *.lock
 !package-lock.json
 
+# Integration tests
+it/node_modules/
+it/test-results/
+it/playwright-report/
+
 # IDE
 .idea/
 *.iml

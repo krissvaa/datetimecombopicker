@@ -95,6 +95,59 @@ registerStyles(
       font-size: var(--lumo-font-size-l);
       font-weight: 500;
       line-height: 1;
+      height: var(--lumo-size-s);
+      border-radius: var(--lumo-border-radius-m);
+      cursor: var(--lumo-clickable-cursor);
+    }
+
+    [part='month-year-label']:hover {
+      background-color: var(--lumo-contrast-5pct);
+    }
+
+    [part='month-year-label']::after {
+      content: var(--lumo-icons-dropdown);
+      font-family: 'lumo-icons';
+      font-size: var(--lumo-icon-size-s);
+      color: var(--lumo-tertiary-text-color);
+      vertical-align: middle;
+      margin-inline-start: var(--lumo-space-xs);
+      display: inline-block;
+      transition: transform 0.1s;
+    }
+
+    [part='month-year-label'][aria-expanded='true']::after {
+      transform: rotate(180deg);
+    }
+
+    [part='year-grid'] {
+      gap: var(--lumo-space-xs);
+      padding: var(--lumo-space-s) var(--lumo-space-xs);
+      scrollbar-width: none;
+    }
+
+    [part='year-grid']::-webkit-scrollbar {
+      display: none;
+    }
+
+    [part~='year-cell'] {
+      height: var(--lumo-size-m);
+      font-size: var(--lumo-font-size-m);
+      border-radius: var(--lumo-border-radius-m);
+      cursor: var(--lumo-clickable-cursor);
+      font-variant-numeric: tabular-nums;
+    }
+
+    [part~='year-cell']:hover {
+      background-color: var(--lumo-primary-color-10pct);
+    }
+
+    [part~='year-cell-selected'] {
+      background-color: var(--vaadin-selection-color, var(--lumo-primary-color));
+      color: var(--lumo-primary-contrast-color);
+    }
+
+    [part~='year-cell-selected']:hover {
+      background-color: var(--vaadin-selection-color, var(--lumo-primary-color));
     }
 
     [part$='month-button'] {

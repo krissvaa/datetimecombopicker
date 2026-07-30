@@ -4,7 +4,8 @@
  * This program is available under Apache License Version 2.0.
  *
  * Layout inspired by the MUI X DateTimePicker desktop view
- * (calendar on the left, time columns on the right).
+ * (calendar on the left, time columns on the right). Keyboard navigation
+ * modeled on vaadin-date-picker.
  */
 import { css, html, LitElement, nothing } from 'lit';
 import { defineCustomElement } from '@vaadin/component-base/src/define.js';
@@ -12,6 +13,7 @@ import { PolylitMixin } from '@vaadin/component-base/src/polylit-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
 import './vendor/dtcp-month-calendar.js';
 import './dtcp-time-columns.js';
+import { dateAllowed, dateEquals } from './vendor/date-picker-helper.js';
 import type { TimeColumns, TimeValue } from './dtcp-time-columns.js';
 import type { TimeConfig } from './dtcp-format.js';
 
@@ -21,6 +23,7 @@ export interface DtcpI18n {
   weekdaysShort: string[];
   firstDayOfWeek: number;
   today: string;
+  year: string;
   formatTitle: (monthName: string, fullYear: number) => string;
   prevMonth: string;
   nextMonth: string;
@@ -51,6 +54,7 @@ export const DEFAULT_I18N: DtcpI18n = {
   weekdaysShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
   firstDayOfWeek: 0,
   today: 'Today',
+  year: 'Year',
   formatTitle: (monthName, fullYear) => `${monthName} ${fullYear}`,
   prevMonth: 'Previous month',
   nextMonth: 'Next month',
@@ -62,12 +66,21 @@ export const DEFAULT_I18N: DtcpI18n = {
   pm: 'PM',
 };
 
+const MIN_YEAR = 1900;
+const MAX_YEAR = 2099;
+
+interface MonthCalendarElement extends HTMLElement {
+  focusableDateElement?: HTMLElement;
+  updateComplete: Promise<boolean>;
+}
+
 /**
  * `<dtcp-overlay-content>` lays out the month calendar and the time columns
- * side by side inside the `<date-time-combo-picker>` popup.
+ * side by side inside the `<date-time-combo-picker>` popup, with an
+ * alternative year-grid view for fast year navigation.
  * An internal element, not intended to be used separately.
  *
- * @fires date-selected - `detail.date` is the tapped `Date`.
+ * @fires date-selected - `detail.date` is the selected `Date`.
  * @fires time-selected - `detail` is a `TimeValue`.
  *
  * @private
@@ -81,7 +94,9 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
   declare maxDate: Date | null;
   declare showWeekNumbers: boolean;
   declare initialPosition: Date | null;
+  declare focusedDate: Date | null;
   declare _displayedMonth: Date;
+  declare _yearViewOpen: boolean;
 
   static get is() {
     return 'dtcp-overlay-content';
@@ -126,9 +141,19 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
         type: Object,
       },
 
+      /** The date that keyboard navigation focuses in the calendar. */
+      focusedDate: {
+        type: Object,
+      },
+
       /** @protected */
       _displayedMonth: {
         type: Object,
+      },
+
+      /** @protected */
+      _yearViewOpen: {
+        type: Boolean,
       },
     };
   }
@@ -159,6 +184,14 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       [part='month-year-label'] {
         flex: auto;
         text-align: center;
+        appearance: none;
+        border: 0;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
       }
 
       [part$='month-button'] {
@@ -185,6 +218,25 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
         width: 1px;
         height: 1px;
         margin: -1px;
+      }
+
+      [part='year-grid'] {
+        flex: auto;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        align-content: start;
+      }
+
+      [part~='year-cell'] {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
       }
 
       [part='time-section'] {
@@ -217,7 +269,9 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     this.maxDate = null;
     this.showWeekNumbers = false;
     this.initialPosition = null;
+    this.focusedDate = null;
     this._displayedMonth = new Date();
+    this._yearViewOpen = false;
   }
 
   /** @protected */
@@ -229,23 +283,62 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     return html`
       <div part="calendar-section" ?hidden="${!config.hasDate}">
         <div part="calendar-header">
-          <button part="prev-month-button" aria-label="${this.i18n.prevMonth}" @click="${this.__prevMonth}"></button>
-          <div part="month-year-label" aria-live="polite">${title}</div>
-          <button part="next-month-button" aria-label="${this.i18n.nextMonth}" @click="${this.__nextMonth}"></button>
+          <button
+            part="prev-month-button"
+            aria-label="${this.i18n.prevMonth}"
+            ?hidden="${this._yearViewOpen}"
+            @click="${this.__prevMonth}"
+          ></button>
+          <button
+            part="month-year-label"
+            aria-live="polite"
+            aria-expanded="${this._yearViewOpen ? 'true' : 'false'}"
+            aria-label="${title}, ${this.i18n.year}"
+            @click="${this.__toggleYearView}"
+          >
+            ${title}
+          </button>
+          <button
+            part="next-month-button"
+            aria-label="${this.i18n.nextMonth}"
+            ?hidden="${this._yearViewOpen}"
+            @click="${this.__nextMonth}"
+          ></button>
         </div>
-        <dtcp-month-calendar
-          .month="${month}"
-          .selectedDate="${this.selectedDate ?? undefined}"
-          .focusedDate="${this.selectedDate ?? undefined}"
-          .i18n="${this.i18n}"
-          .minDate="${this.minDate}"
-          .maxDate="${this.maxDate}"
-          .showWeekNumbers="${this.showWeekNumbers}"
-          @date-tap="${this.__onDateTap}"
-        ></dtcp-month-calendar>
-        <div part="calendar-footer">
-          <button part="today-button" @click="${this.__onTodayClick}">${this.i18n.today}</button>
-        </div>
+        ${this._yearViewOpen
+          ? html`
+              <div part="year-grid" role="listbox" aria-label="${this.i18n.year}">
+                ${this.__years().map(
+                  (year) => html`
+                    <button
+                      part="year-cell ${year === month.getFullYear() ? 'year-cell-selected' : ''}"
+                      role="option"
+                      aria-selected="${String(year === month.getFullYear())}"
+                      data-year="${year}"
+                      @click="${() => this.__selectYear(year)}"
+                    >
+                      ${year}
+                    </button>
+                  `,
+                )}
+              </div>
+            `
+          : html`
+              <dtcp-month-calendar
+                .month="${month}"
+                .selectedDate="${this.selectedDate ?? undefined}"
+                .focusedDate="${(this.focusedDate ?? this.selectedDate) ?? undefined}"
+                .i18n="${this.i18n}"
+                .minDate="${this.minDate}"
+                .maxDate="${this.maxDate}"
+                .showWeekNumbers="${this.showWeekNumbers}"
+                @date-tap="${this.__onDateTap}"
+                @keydown="${this.__onCalendarKeyDown}"
+              ></dtcp-month-calendar>
+              <div part="calendar-footer">
+                <button part="today-button" @click="${this.__onTodayClick}">${this.i18n.today}</button>
+              </div>
+            `}
       </div>
       <div part="time-section" ?hidden="${!config.hasTime}">
         <dtcp-time-columns
@@ -266,20 +359,63 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     `;
   }
 
-  /** Resets the displayed month and scrolls time columns; called when the overlay opens. */
+  /** Resets the view state and scrolls time columns; called when the overlay opens. */
   initialize() {
     const position = this.selectedDate ?? this.initialPosition ?? new Date();
     this._displayedMonth = new Date(position.getFullYear(), position.getMonth(), 1);
+    this.focusedDate = this.selectedDate ?? this.__normalize(position);
+    this._yearViewOpen = false;
     const columns = this.shadowRoot!.querySelector<TimeColumns>('dtcp-time-columns');
     if (columns) {
       requestAnimationFrame(() => columns.scrollToValue(true));
     }
   }
 
+  /** Moves keyboard focus onto the focused date cell of the calendar. */
+  async focusDateCell() {
+    if (this._yearViewOpen) {
+      this.__focusSelectedYear();
+      return;
+    }
+    if (!this.focusedDate) {
+      this.focusedDate = this.selectedDate ?? this.__normalize(new Date());
+    }
+    await this.updateComplete;
+    const calendar = this.__calendar();
+    if (calendar) {
+      await calendar.updateComplete;
+      calendar.focusableDateElement?.focus();
+    }
+  }
+
+  /** Moves keyboard focus onto the first time column. */
+  focusTimeColumns() {
+    const columns = this.shadowRoot!.querySelector<TimeColumns>('dtcp-time-columns');
+    columns?.shadowRoot!.querySelector<HTMLElement>('[part="column"]')?.focus();
+  }
+
+  /** @private */
+  __calendar(): (MonthCalendarElement & HTMLElement) | null {
+    return this.shadowRoot!.querySelector<MonthCalendarElement & HTMLElement>('dtcp-month-calendar');
+  }
+
+  /** @private */
+  __normalize(date: Date): Date {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  }
+
+  /** @private */
+  __years(): number[] {
+    return Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i);
+  }
+
   /** @private */
   __selectedDateChanged(date: Date | null) {
     if (date) {
       this._displayedMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      this.focusedDate = date;
     }
   }
 
@@ -296,6 +432,35 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
   }
 
   /** @private */
+  async __toggleYearView() {
+    this._yearViewOpen = !this._yearViewOpen;
+    if (this._yearViewOpen) {
+      await this.updateComplete;
+      const selected = this.shadowRoot!.querySelector<HTMLElement>('[part~="year-cell-selected"]');
+      selected?.scrollIntoView({ block: 'center' });
+    }
+  }
+
+  /** @private */
+  async __focusSelectedYear() {
+    await this.updateComplete;
+    this.shadowRoot!.querySelector<HTMLElement>('[part~="year-cell-selected"]')?.focus();
+  }
+
+  /** @private */
+  async __selectYear(year: number) {
+    const m = this._displayedMonth;
+    this._displayedMonth = new Date(year, m.getMonth(), 1);
+    if (this.focusedDate) {
+      const f = new Date(this.focusedDate);
+      f.setFullYear(year);
+      this.focusedDate = f;
+    }
+    this._yearViewOpen = false;
+    await this.focusDateCell();
+  }
+
+  /** @private */
   __onDateTap(event: CustomEvent<{ date: Date }>) {
     this.dispatchEvent(new CustomEvent('date-selected', { detail: { date: event.detail.date } }));
   }
@@ -308,6 +473,84 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
   /** @private */
   __onTimeChanged(event: CustomEvent<TimeValue>) {
     this.dispatchEvent(new CustomEvent('time-selected', { detail: event.detail }));
+  }
+
+  /** @private */
+  async __moveFocusedDate(days: number, months: number, years: number) {
+    const current = this.focusedDate ?? this.selectedDate ?? this.__normalize(new Date());
+    const next = new Date(current);
+    if (days !== 0) {
+      next.setDate(next.getDate() + days);
+    }
+    if (months !== 0 || years !== 0) {
+      // Keep the day of month when possible, clamp to the target month's length
+      const day = next.getDate();
+      next.setDate(1);
+      next.setMonth(next.getMonth() + months);
+      next.setFullYear(next.getFullYear() + years);
+      const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+      next.setDate(Math.min(day, lastDay));
+    }
+    if (next.getFullYear() < MIN_YEAR || next.getFullYear() > MAX_YEAR) {
+      return;
+    }
+    this.focusedDate = next;
+    this._displayedMonth = new Date(next.getFullYear(), next.getMonth(), 1);
+    await this.focusDateCell();
+  }
+
+  /** @private */
+  __onCalendarKeyDown(event: KeyboardEvent) {
+    const rtl = getComputedStyle(this).direction === 'rtl';
+    let handled = true;
+
+    switch (event.key) {
+      case 'ArrowRight':
+        this.__moveFocusedDate(rtl ? -1 : 1, 0, 0);
+        break;
+      case 'ArrowLeft':
+        this.__moveFocusedDate(rtl ? 1 : -1, 0, 0);
+        break;
+      case 'ArrowDown':
+        this.__moveFocusedDate(7, 0, 0);
+        break;
+      case 'ArrowUp':
+        this.__moveFocusedDate(-7, 0, 0);
+        break;
+      case 'PageDown':
+        this.__moveFocusedDate(0, event.shiftKey ? 0 : 1, event.shiftKey ? 1 : 0);
+        break;
+      case 'PageUp':
+        this.__moveFocusedDate(0, event.shiftKey ? 0 : -1, event.shiftKey ? -1 : 0);
+        break;
+      case 'Home': {
+        const m = this._displayedMonth;
+        this.focusedDate = new Date(m.getFullYear(), m.getMonth(), 1);
+        this.focusDateCell();
+        break;
+      }
+      case 'End': {
+        const m = this._displayedMonth;
+        this.focusedDate = new Date(m.getFullYear(), m.getMonth() + 1, 0);
+        this.focusDateCell();
+        break;
+      }
+      case 'Enter':
+      case ' ': {
+        const date = this.focusedDate;
+        if (date && dateAllowed(date, this.minDate, this.maxDate) && !dateEquals(date, this.selectedDate)) {
+          this.dispatchEvent(new CustomEvent('date-selected', { detail: { date } }));
+        }
+        break;
+      }
+      default:
+        handled = false;
+    }
+
+    if (handled) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   }
 }
 

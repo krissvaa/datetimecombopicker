@@ -99,6 +99,32 @@
     <build>
         <defaultGoal>jetty:run</defaultGoal>
         <plugins>
+            <!-- Remove the META-INF/frontend copy left over from a previous
+                 package/install: if it is on the classpath during this build,
+                 Flow resolves the ./ import to generated/jar-resources and the
+                 demo would use stale files. It is re-created at prepare-package. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.3.2</version>
+                <executions>
+                    <execution>
+                        <id>clean-stale-frontend-copy</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                        <configuration>
+                            <excludeDefaultDirectories>true</excludeDefaultDirectories>
+                            <filesets>
+                                <fileset>
+                                    <directory>${project.build.outputDirectory}/META-INF/frontend</directory>
+                                </fileset>
+                            </filesets>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!-- Build the web component (npm) and bundle it into META-INF/frontend -->
             <plugin>
                 <groupId>com.github.eirslett</groupId>

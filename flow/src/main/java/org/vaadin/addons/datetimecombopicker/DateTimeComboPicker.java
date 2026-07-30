@@ -313,6 +313,7 @@ public class DateTimeComboPicker
         putStringArray(json, "weekdaysShort", i18n.getWeekdaysShort());
         json.put("firstDayOfWeek", i18n.getFirstDayOfWeek());
         putString(json, "today", i18n.getToday());
+        putString(json, "year", i18n.getYear());
         putString(json, "prevMonth", i18n.getPrevMonth());
         putString(json, "nextMonth", i18n.getNextMonth());
         putString(json, "hours", i18n.getHours());

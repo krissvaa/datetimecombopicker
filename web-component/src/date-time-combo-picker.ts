@@ -263,7 +263,10 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
 
     const overlay = this.$.overlay as DtcpOverlay;
     (overlay as any).positionTarget = this.$.inputContainer;
-    (overlay as any).restoreFocusOnClose = false;
+    // When the popup closes while focus is inside it (keyboard navigation),
+    // move focus back to the input.
+    (overlay as any).restoreFocusOnClose = true;
+    (overlay as any).restoreFocusNode = this.inputElement;
   }
 
   /** Opens the popup, unless the field is disabled or read-only. */
@@ -386,16 +389,40 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   }
 
   /**
-   * Override a method from `KeyboardMixin`: open the popup on arrow keys.
+   * Override a method from `KeyboardMixin`: open the popup on arrow keys,
+   * and move focus into the popup on ArrowDown when it is already open.
    * @protected
    * @override
    */
   _onKeyDown(event: KeyboardEvent) {
     super._onKeyDown(event);
-    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && !this.opened) {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
-      this.open();
+      if (!this.opened) {
+        this.open();
+      } else if (event.key === 'ArrowDown') {
+        const content = this.$.overlayContent as DtcpOverlayContent;
+        if (this._timeConfig.hasDate) {
+          content.focusDateCell();
+        } else if (this._timeConfig.hasTime) {
+          content.focusTimeColumns();
+        }
+      }
     }
+  }
+
+  /**
+   * Override a method from `FocusMixin`: moving focus into the popup
+   * (keyboard navigation in the calendar) must not blur the field.
+   * @protected
+   * @override
+   */
+  _shouldRemoveFocus(event: FocusEvent): boolean {
+    const related = event.relatedTarget as Node | null;
+    if (related && this.$ && this.$.overlay.contains(related)) {
+      return false;
+    }
+    return true;
   }
 
   /** @private */

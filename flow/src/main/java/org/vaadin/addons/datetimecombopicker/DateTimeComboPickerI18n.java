@@ -29,6 +29,7 @@ public class DateTimeComboPickerI18n implements Serializable {
     private List<String> weekdaysShort;
     private int firstDayOfWeek;
     private String today;
+    private String year;
     private String prevMonth;
     private String nextMonth;
     private String hours;
@@ -141,6 +142,28 @@ public class DateTimeComboPickerI18n implements Serializable {
      */
     public DateTimeComboPickerI18n setToday(String today) {
         this.today = today;
+        return this;
+    }
+
+    /**
+     * Gets the accessible label of the year selector (the popup's month-year
+     * header button and the year grid).
+     *
+     * @return the label, or {@code null} for the default
+     */
+    public String getYear() {
+        return year;
+    }
+
+    /**
+     * Sets the accessible label of the year selector.
+     *
+     * @param year
+     *            the label
+     * @return this instance for method chaining
+     */
+    public DateTimeComboPickerI18n setYear(String year) {
+        this.year = year;
         return this;
     }
 

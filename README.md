@@ -108,7 +108,15 @@ cd flow
 mvn jetty:run      # demo at http://localhost:8080 (builds the npm package first)
 mvn test
 mvn install -Pdirectory   # build the Vaadin Directory zip (target/*.zip)
+
+# Integration tests: drive the demo app in Chromium (starts jetty automatically)
+cd it
+npm install
+npm test           # VAADIN_VERSION=24.10.8 npm test to run against another platform
 ```
+
+CI (GitHub Actions) runs the web-component tests, `mvn verify` against the minimum
+(24.4) and latest supported Vaadin platform, and the Playwright integration tests.
 
 The Flow jar bundles the compiled web component under `META-INF/frontend`, so the
 add-on has no npm-publication dependency; bare imports (`lit`, `@vaadin/*`) resolve
@@ -127,6 +135,12 @@ against the consuming application's Vaadin 24 platform packages.
 - The time selector is a set of free-scrolling columns with click-to-select and
   keyboard support (`ArrowUp`/`ArrowDown`/`Home`/`End`), modeled on the MUI X
   digital clock.
+- **Calendar keyboard navigation**: `ArrowDown` in the field moves focus into the
+  calendar; arrows move by day/week, `PageUp`/`PageDown` by month
+  (`Shift` for year), `Home`/`End` to first/last day of the month,
+  `Enter`/`Space` selects, `Escape` closes and returns focus to the field.
+- **Year navigation**: clicking the month-year header opens a scrollable year
+  grid (1900–2099).
 
 ## Inspirations & credits
 

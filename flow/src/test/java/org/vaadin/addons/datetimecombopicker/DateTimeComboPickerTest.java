@@ -148,6 +148,55 @@ class DateTimeComboPickerTest {
     }
 
     @Test
+    void timeSteps_roundTripAndValidation() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        assertEquals(1, picker.getHourStep());
+        assertEquals(1, picker.getMinuteStep());
+        assertEquals(1, picker.getSecondStep());
+
+        picker.setHourStep(6);
+        picker.setMinuteStep(5);
+        picker.setSecondStep(30);
+        assertEquals(6, picker.getHourStep());
+        assertEquals(5, picker.getMinuteStep());
+        assertEquals(30, picker.getSecondStep());
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class, () -> picker.setMinuteStep(0));
+    }
+
+    @Test
+    void initialPosition_roundTrip() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        assertNull(picker.getInitialPosition());
+        LocalDateTime position = LocalDateTime.of(2030, 1, 15, 12, 30);
+        picker.setInitialPosition(position);
+        assertEquals(position, picker.getInitialPosition());
+        picker.setInitialPosition(null);
+        assertNull(picker.getInitialPosition());
+    }
+
+    @Test
+    void autoApply_roundTrip() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        assertTrue(picker.isAutoApply());
+        picker.setAutoApply(false);
+        assertFalse(picker.isAutoApply());
+        assertFalse(picker.getElement().getProperty("autoApply", true));
+    }
+
+    @Test
+    void i18n_actionBarLabelsSerialized() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        picker.setI18n(new DateTimeComboPickerI18n().setOk("Apply")
+                .setCancel("Peruuta").setYear("Vuosi"));
+        String json = picker.getElement().getPropertyRaw("i18n").toString();
+        assertTrue(json.contains("Apply"));
+        assertTrue(json.contains("Peruuta"));
+        assertTrue(json.contains("Vuosi"));
+    }
+
+    @Test
     void valueChangeListener_firesOnServerSideChange() {
         DateTimeComboPicker picker = new DateTimeComboPicker();
         LocalDateTime[] observed = new LocalDateTime[1];

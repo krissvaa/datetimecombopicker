@@ -13,6 +13,7 @@ import { css, html, LitElement } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { defineCustomElement } from '@vaadin/component-base/src/define.js';
 import { ElementMixin } from '@vaadin/component-base/src/element-mixin.js';
+import { MediaQueryController } from '@vaadin/component-base/src/media-query-controller.js';
 import { PolylitMixin } from '@vaadin/component-base/src/polylit-mixin.js';
 import { TooltipController } from '@vaadin/component-base/src/tooltip-controller.js';
 import { InputControlMixin } from '@vaadin/field-base/src/input-control-mixin.js';
@@ -32,11 +33,13 @@ import {
 } from './dtcp-format.js';
 import type { DateTimeParts, TimeConfig, Token } from './dtcp-format.js';
 import { DEFAULT_I18N } from './dtcp-overlay-content.js';
-import type { DtcpI18n, DtcpOverlayContent } from './dtcp-overlay-content.js';
+import type { DtcpI18n, DtcpOverlayContent, IsDateDisabledFn } from './dtcp-overlay-content.js';
 import type { DtcpOverlay } from './dtcp-overlay.js';
 import type { TimeValue } from './dtcp-time-columns.js';
 
 export const DEFAULT_FORMAT = 'dd.MM.yyyy HH:mm';
+
+const FULLSCREEN_MEDIA_QUERY = '(max-width: 450px), (max-height: 450px)';
 
 /**
  * `<date-time-combo-picker>` is a web component for selecting both a date and
@@ -73,6 +76,14 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   declare autoOpenDisabled: boolean;
   declare showWeekNumbers: boolean;
   declare i18n: DtcpI18n;
+  declare hourStep: number;
+  declare minuteStep: number;
+  declare secondStep: number;
+  declare isDateDisabled: IsDateDisabledFn | undefined;
+  declare initialPosition: string | null;
+  declare autoApply: boolean;
+  declare _fullscreen: boolean;
+  declare _stagedParts: DateTimeParts | null;
   declare _timeConfig: TimeConfig;
   declare invalid: boolean;
   declare required: boolean;
@@ -149,6 +160,74 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
         sync: true,
       },
 
+      /** Interval between the items of the hours column. Must divide 24 evenly for a uniform column. */
+      hourStep: {
+        type: Number,
+        value: 1,
+        sync: true,
+      },
+
+      /** Interval between the items of the minutes column. */
+      minuteStep: {
+        type: Number,
+        value: 1,
+        sync: true,
+      },
+
+      /** Interval between the items of the seconds column. */
+      secondStep: {
+        type: Number,
+        value: 1,
+        sync: true,
+      },
+
+      /**
+       * A function that determines whether a given date is disabled.
+       * Receives `{ day, month, year }` (month is 0-based) and returns true
+       * to disable the date. Disabled dates cannot be selected in the
+       * calendar and make the value invalid.
+       */
+      isDateDisabled: {
+        type: Object,
+        sync: true,
+      },
+
+      /**
+       * The date-time (ISO-8601 string, `yyyy-MM-dd` or `yyyy-MM-ddTHH:mm[:ss]`)
+       * to show and to use for the unselected date/time parts when there is
+       * no value yet. Defaults to the current date-time.
+       */
+      initialPosition: {
+        type: String,
+        value: null,
+        sync: true,
+      },
+
+      /**
+       * When true (default), selections in the popup are applied to the value
+       * immediately. When false, selections are staged and the popup shows a
+       * Cancel/OK action bar; only OK applies the staged selection.
+       */
+      autoApply: {
+        type: Boolean,
+        value: true,
+        sync: true,
+      },
+
+      /** @protected */
+      _fullscreen: {
+        type: Boolean,
+        value: false,
+        sync: true,
+      },
+
+      /** @protected */
+      _stagedParts: {
+        type: Object,
+        value: null,
+        sync: true,
+      },
+
       /** @protected */
       _timeConfig: {
         type: Object,
@@ -214,6 +293,8 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       <dtcp-overlay
         id="overlay"
         .opened="${this.opened}"
+        ?fullscreen="${this._fullscreen}"
+        .withBackdrop="${this._fullscreen}"
         no-vertical-overlap
         theme="${ifDefined((this as any)._theme)}"
         @opened-changed="${this.__onOverlayOpenedChanged}"
@@ -221,15 +302,23 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       >
         <dtcp-overlay-content
           id="overlayContent"
+          ?fullscreen="${this._fullscreen}"
           .selectedDate="${this.__selectedDate()}"
           .timeValue="${this.__timeValue()}"
           .timeConfig="${this._timeConfig}"
           .i18n="${{ ...DEFAULT_I18N, ...this.i18n }}"
           .minDate="${this.__minMaxDate(this.min)}"
           .maxDate="${this.__minMaxDate(this.max)}"
+          .isDateDisabled="${this.isDateDisabled}"
+          .steps="${{ hours: this.hourStep, minutes: this.minuteStep, seconds: this.secondStep }}"
+          .referenceTime="${this.__referenceTime()}"
+          .showActions="${!this.autoApply}"
+          .initialPosition="${this.__initialPositionDate()}"
           .showWeekNumbers="${this.showWeekNumbers}"
           @date-selected="${this.__onDateSelected}"
           @time-selected="${this.__onTimeSelected}"
+          @apply-action="${this.__onApplyAction}"
+          @cancel-action="${this.__onCancelAction}"
         ></dtcp-overlay-content>
       </dtcp-overlay>
     `;
@@ -267,6 +356,12 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     // move focus back to the input.
     (overlay as any).restoreFocusOnClose = true;
     (overlay as any).restoreFocusNode = this.inputElement;
+
+    this.addController(
+      new (MediaQueryController as any)(FULLSCREEN_MEDIA_QUERY, (matches: boolean) => {
+        this._fullscreen = matches;
+      }),
+    );
   }
 
   /** Opens the popup, unless the field is disabled or read-only. */
@@ -292,7 +387,21 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     const inputParses = !text || !!parseDateTime(this.__tokens, text);
     const requiredOk = !this.required || !!this.value;
     const rangeOk = !this.value || this.__isInRange(this.value);
-    return inputParses && requiredOk && rangeOk;
+    const dateEnabled = !this.value || !this.__isValueDateDisabled(this.value);
+    return inputParses && requiredOk && rangeOk && dateEnabled;
+  }
+
+  /** @private */
+  __isValueDateDisabled(value: string): boolean {
+    if (typeof this.isDateDisabled !== 'function') {
+      return false;
+    }
+    const parts = parseIsoDateTime(value);
+    if (!parts) {
+      return false;
+    }
+    // The callback receives a 0-based month, like the calendar internals
+    return this.isDateDisabled({ day: parts.day, month: parts.month - 1, year: parts.year });
   }
 
   /**
@@ -443,6 +552,8 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
         content.initialize();
       });
     } else if (oldOpened) {
+      // Closing without OK discards any staged (not applied) selection
+      this._stagedParts = null;
       this.validate();
     }
   }
@@ -470,19 +581,66 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   }
 
   /** @private */
+  __currentParts(): DateTimeParts | null {
+    if (this._stagedParts) {
+      return this._stagedParts;
+    }
+    return this.value ? parseIsoDateTime(this.value) : null;
+  }
+
+  /**
+   * The parts used for the not-yet-selected date/time components:
+   * the initial position when set, otherwise "now" (with zeroed time
+   * for the time part, matching a fresh date selection).
+   * @private
+   */
+  __referenceParts(): DateTimeParts {
+    const initial = this.__initialPositionParts();
+    if (initial) {
+      return initial;
+    }
+    const now = dateToParts(new Date());
+    return { ...now, hours: 0, minutes: 0, seconds: 0 };
+  }
+
+  /** @private */
+  __initialPositionParts(): DateTimeParts | null {
+    if (!this.initialPosition) {
+      return null;
+    }
+    const iso = /^\d{4}-\d{2}-\d{2}$/u.test(this.initialPosition)
+      ? `${this.initialPosition}T00:00:00`
+      : this.initialPosition;
+    return parseIsoDateTime(iso);
+  }
+
+  /** @private */
+  __initialPositionDate(): Date | null {
+    const parts = this.__initialPositionParts();
+    return parts ? partsToDate(parts) : null;
+  }
+
+  /** @private */
+  __referenceTime(): TimeValue {
+    const reference = this.__referenceParts();
+    return { hours: reference.hours, minutes: reference.minutes, seconds: reference.seconds };
+  }
+
+  /** @private */
   __onDateSelected(event: CustomEvent<{ date: Date }>) {
     const date = event.detail.date;
-    const current = this.value ? parseIsoDateTime(this.value) : null;
+    const current = this.__currentParts();
+    const reference = this.__referenceParts();
     const parts: DateTimeParts = {
       year: date.getFullYear(),
       month: date.getMonth() + 1,
       day: date.getDate(),
-      hours: current ? current.hours : 0,
-      minutes: current ? current.minutes : 0,
-      seconds: current ? current.seconds : 0,
+      hours: current ? current.hours : reference.hours,
+      minutes: current ? current.minutes : reference.minutes,
+      seconds: current ? current.seconds : reference.seconds,
     };
-    this.__commitParts(parts);
-    if (!this._timeConfig.hasTime) {
+    this.__applyParts(parts);
+    if (this.autoApply && !this._timeConfig.hasTime) {
       // Plain date pattern: behave like a date picker and close on selection
       this.close();
     }
@@ -491,8 +649,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   /** @private */
   __onTimeSelected(event: CustomEvent<TimeValue>) {
     const time = event.detail;
-    const current = this.value ? parseIsoDateTime(this.value) : null;
-    const base = current ?? dateToParts(new Date());
+    const base = this.__currentParts() ?? this.__referenceParts();
     const parts: DateTimeParts = {
       year: base.year,
       month: base.month,
@@ -501,7 +658,31 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       minutes: time.minutes,
       seconds: time.seconds,
     };
-    this.__commitParts(parts);
+    this.__applyParts(parts);
+  }
+
+  /** @private */
+  __applyParts(parts: DateTimeParts) {
+    if (this.autoApply) {
+      this.__commitParts(parts);
+    } else {
+      this._stagedParts = parts;
+    }
+  }
+
+  /** @private */
+  __onApplyAction() {
+    if (this._stagedParts) {
+      this.__commitParts(this._stagedParts);
+      this._stagedParts = null;
+    }
+    this.close();
+  }
+
+  /** @private */
+  __onCancelAction() {
+    this._stagedParts = null;
+    this.close();
   }
 
   /** @private */
@@ -544,13 +725,13 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
 
   /** @private */
   __selectedDate(): Date | null {
-    const parts = this.value ? parseIsoDateTime(this.value) : null;
+    const parts = this.__currentParts();
     return parts ? partsToDate(parts) : null;
   }
 
   /** @private */
   __timeValue(): TimeValue | null {
-    const parts = this.value ? parseIsoDateTime(this.value) : null;
+    const parts = this.__currentParts();
     return parts ? { hours: parts.hours, minutes: parts.minutes, seconds: parts.seconds } : null;
   }
 

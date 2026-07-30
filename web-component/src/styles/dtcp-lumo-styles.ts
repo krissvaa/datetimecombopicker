@@ -62,6 +62,26 @@ registerStyles(
       :host([bottom-aligned]) [part~='overlay'] {
         margin-bottom: var(--lumo-space-xs);
       }
+
+      /* Fullscreen (mobile): bottom sheet with a backdrop */
+      :host([fullscreen]) {
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-end;
+        padding: 0;
+      }
+
+      :host([fullscreen]) [part='overlay'] {
+        width: 100%;
+        max-height: 80vh;
+        margin: 0;
+        border-radius: var(--lumo-border-radius-l) var(--lumo-border-radius-l) 0 0;
+      }
     `,
   ],
   { moduleId: 'lumo-dtcp-overlay' },
@@ -76,8 +96,61 @@ registerStyles(
       font-family: var(--lumo-font-family);
       font-size: var(--lumo-font-size-m);
       color: var(--lumo-body-text-color);
+    }
+
+    [part='main'] {
       /* Height of the popup: month grid rows + header + weekdays + footer */
       height: calc(var(--lumo-size-m) * 9.5);
+      flex: none;
+    }
+
+    [part='action-bar'] {
+      border-top: 1px solid var(--lumo-contrast-10pct);
+      padding: var(--lumo-space-s) var(--lumo-space-m);
+      gap: var(--lumo-space-s);
+    }
+
+    [part$='-action-button'] {
+      height: var(--lumo-size-s);
+      padding: 0 var(--lumo-space-m);
+      font-family: var(--lumo-font-family);
+      font-size: var(--lumo-font-size-s);
+      font-weight: 500;
+      border-radius: var(--lumo-border-radius-m);
+      cursor: var(--lumo-clickable-cursor);
+    }
+
+    [part='cancel-action-button'] {
+      color: var(--lumo-secondary-text-color);
+    }
+
+    [part='cancel-action-button']:hover {
+      background-color: var(--lumo-contrast-5pct);
+    }
+
+    [part='ok-action-button'] {
+      color: var(--lumo-primary-contrast-color);
+      background-color: var(--lumo-primary-color);
+    }
+
+    [part='ok-action-button']:hover {
+      filter: brightness(1.1);
+    }
+
+    /* Fullscreen (mobile): calendar stacked above centered time columns */
+    :host([fullscreen]) [part='main'] {
+      height: auto;
+      width: 100%;
+    }
+
+    :host([fullscreen]) [part='calendar-section'] {
+      margin-inline: auto;
+    }
+
+    :host([fullscreen]) [part='time-section'] {
+      border-inline-start: none;
+      border-top: 1px solid var(--lumo-contrast-10pct);
+      height: calc(var(--lumo-size-s) * 5);
     }
 
     [part='calendar-section'] {

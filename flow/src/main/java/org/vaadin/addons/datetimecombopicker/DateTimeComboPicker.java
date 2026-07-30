@@ -241,6 +241,156 @@ public class DateTimeComboPicker
     }
 
     /**
+     * Sets the interval between the items of the hours column, e.g. 6 shows
+     * 00, 06, 12, 18. Values that divide 24 evenly produce a uniform column.
+     *
+     * @param hourStep
+     *            the hour interval, at least 1
+     */
+    public void setHourStep(int hourStep) {
+        if (hourStep < 1) {
+            throw new IllegalArgumentException("hourStep must be at least 1");
+        }
+        getElement().setProperty("hourStep", hourStep);
+    }
+
+    /**
+     * Gets the interval between the items of the hours column.
+     *
+     * @return the hour interval
+     */
+    public int getHourStep() {
+        return getElement().getProperty("hourStep", 1);
+    }
+
+    /**
+     * Sets the interval between the items of the minutes column, e.g. 5 shows
+     * 00, 05, 10, ... 55. Values that divide 60 evenly produce a uniform
+     * column.
+     *
+     * @param minuteStep
+     *            the minute interval, at least 1
+     */
+    public void setMinuteStep(int minuteStep) {
+        if (minuteStep < 1) {
+            throw new IllegalArgumentException("minuteStep must be at least 1");
+        }
+        getElement().setProperty("minuteStep", minuteStep);
+    }
+
+    /**
+     * Gets the interval between the items of the minutes column.
+     *
+     * @return the minute interval
+     */
+    public int getMinuteStep() {
+        return getElement().getProperty("minuteStep", 1);
+    }
+
+    /**
+     * Sets the interval between the items of the seconds column.
+     *
+     * @param secondStep
+     *            the second interval, at least 1
+     */
+    public void setSecondStep(int secondStep) {
+        if (secondStep < 1) {
+            throw new IllegalArgumentException("secondStep must be at least 1");
+        }
+        getElement().setProperty("secondStep", secondStep);
+    }
+
+    /**
+     * Gets the interval between the items of the seconds column.
+     *
+     * @return the second interval
+     */
+    public int getSecondStep() {
+        return getElement().getProperty("secondStep", 1);
+    }
+
+    /**
+     * Sets a client-side function that determines whether a given date is
+     * disabled. Disabled dates cannot be selected in the calendar and make
+     * the field invalid.
+     *
+     * <p>
+     * The argument must be a JavaScript function expression that receives a
+     * {@code { day, month, year }} object (where {@code month} is
+     * <b>0-based</b>) and returns {@code true} to disable the date. Example
+     * disabling weekends:
+     *
+     * <pre>
+     * picker.setDateDisabledFunction(
+     *         "(d) => [0, 6].includes(new Date(d.year, d.month, d.day).getDay())");
+     * </pre>
+     *
+     * <p>
+     * Note: the expression is evaluated in the browser. Since the function
+     * runs client-side, always re-validate values on the server when the
+     * dates carry security or business meaning. Passing {@code null} removes
+     * the function.
+     *
+     * @param jsFunctionExpression
+     *            a JavaScript function expression, or {@code null} to remove
+     */
+    public void setDateDisabledFunction(String jsFunctionExpression) {
+        if (jsFunctionExpression == null) {
+            getElement().executeJs("this.isDateDisabled = undefined;");
+        } else {
+            getElement().executeJs(
+                    "this.isDateDisabled = (" + jsFunctionExpression + ");");
+        }
+    }
+
+    /**
+     * Sets the date-time that the popup shows initially, and that provides
+     * the date/time parts not yet chosen by the user, when the field has no
+     * value. Defaults to the current date-time.
+     *
+     * @param initialPosition
+     *            the initial position, or {@code null} to use the current
+     *            date-time
+     */
+    public void setInitialPosition(LocalDateTime initialPosition) {
+        getElement().setProperty("initialPosition", initialPosition == null
+                ? "" : formatPresentationValue(initialPosition));
+    }
+
+    /**
+     * Gets the initial popup position.
+     *
+     * @return the initial position, or {@code null} if not set
+     */
+    public LocalDateTime getInitialPosition() {
+        return parsePresentationValue(
+                getElement().getProperty("initialPosition", ""));
+    }
+
+    /**
+     * Sets whether selections in the popup are applied to the value
+     * immediately (the default). When set to {@code false}, selections are
+     * staged and the popup shows a Cancel/OK action bar; only pressing OK
+     * applies the staged selection, while Cancel, Escape or closing the
+     * popup discards it.
+     *
+     * @param autoApply
+     *            {@code true} to apply selections immediately
+     */
+    public void setAutoApply(boolean autoApply) {
+        getElement().setProperty("autoApply", autoApply);
+    }
+
+    /**
+     * Gets whether selections are applied immediately.
+     *
+     * @return {@code true} if selections are applied immediately
+     */
+    public boolean isAutoApply() {
+        return getElement().getProperty("autoApply", true);
+    }
+
+    /**
      * Sets whether ISO-8601 week numbers are shown in the calendar. Only
      * supported when the first day of the week is Monday
      * ({@code i18n.firstDayOfWeek} = 1).
@@ -314,6 +464,8 @@ public class DateTimeComboPicker
         json.put("firstDayOfWeek", i18n.getFirstDayOfWeek());
         putString(json, "today", i18n.getToday());
         putString(json, "year", i18n.getYear());
+        putString(json, "ok", i18n.getOk());
+        putString(json, "cancel", i18n.getCancel());
         putString(json, "prevMonth", i18n.getPrevMonth());
         putString(json, "nextMonth", i18n.getNextMonth());
         putString(json, "hours", i18n.getHours());

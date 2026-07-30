@@ -21,7 +21,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('demo page shows all pickers', async ({ page }) => {
-  await expect(page.locator('date-time-combo-picker')).toHaveCount(7);
+  await expect(page.locator('date-time-combo-picker')).toHaveCount(11);
 });
 
 test('mouse: pick a date and a time in one popup', async ({ page }) => {
@@ -125,8 +125,85 @@ test('Binder round-trip: required validation and server value', async ({ page })
   await expect(page.getByText('Saved: 2026-02-01T08:15')).toBeVisible();
 });
 
-test('min/max marks out-of-range typed values invalid', async ({ page }) => {
+test('minute-step picker shows a reduced minutes column', async ({ page }) => {
   const picker = page.locator('date-time-combo-picker').nth(4);
+  await picker.locator('input').click();
+  const overlay = openOverlay(page);
+  await expect(overlay.locator('[data-column="minutes"] [role="option"]')).toHaveCount(12);
+});
+
+test('disabled dates (weekends) cannot be clicked', async ({ page }) => {
+  const picker = page.locator('date-time-combo-picker').nth(5);
+  const input = picker.locator('input');
+  await input.click();
+  const overlay = openOverlay(page);
+  const disabledCells = overlay.locator('dtcp-month-calendar [part~="date"][part~="disabled"]');
+  // Every month contains at least 8 weekend days
+  expect(await disabledCells.count()).toBeGreaterThanOrEqual(8);
+
+  // Typing a weekend date marks the field invalid
+  await input.fill('18.07.2026 10:00'); // Saturday
+  await input.press('Enter');
+  await page.keyboard.press('Escape');
+  await expect(picker).toHaveAttribute('invalid', '');
+});
+
+test('action bar stages selections until OK', async ({ page }) => {
+  const picker = page.locator('date-time-combo-picker').nth(6);
+  await picker.locator('input').click();
+  const overlay = openOverlay(page);
+
+  await overlay
+    .locator('dtcp-month-calendar [part~="date"]:not([part~="disabled"])')
+    .filter({ hasText: /^10$/ })
+    .click();
+  await overlay.locator('[data-column="hours"] [data-value="14"]').click();
+  // Not applied yet
+  expect(await pickerValue(picker)).toBe('');
+
+  await overlay.locator('[part="ok-action-button"]').click();
+  await expect(openOverlay(page)).toHaveCount(0);
+  expect(await pickerValue(picker)).toMatch(/-10T14:00:00$/);
+});
+
+test('action bar Cancel discards the staged selection', async ({ page }) => {
+  const picker = page.locator('date-time-combo-picker').nth(6);
+  await picker.locator('input').click();
+  const overlay = openOverlay(page);
+  await overlay
+    .locator('dtcp-month-calendar [part~="date"]:not([part~="disabled"])')
+    .filter({ hasText: /^10$/ })
+    .click();
+  await overlay.locator('[part="cancel-action-button"]').click();
+  await expect(openOverlay(page)).toHaveCount(0);
+  expect(await pickerValue(picker)).toBe('');
+});
+
+test('initial position seeds the popup and defaults', async ({ page }) => {
+  const picker = page.locator('date-time-combo-picker').nth(7);
+  await picker.locator('input').click();
+  const overlay = openOverlay(page);
+  await expect(overlay.locator('[part="month-year-label"]')).toContainText('January 2030');
+
+  await overlay.locator('[data-column="hours"] [data-value="9"]').click();
+  expect(await pickerValue(picker)).toBe('2030-01-15T09:30:00');
+});
+
+test('fullscreen bottom sheet on small viewports', async ({ page }) => {
+  await page.setViewportSize({ width: 400, height: 700 });
+  const picker = page.locator('date-time-combo-picker').first();
+  await picker.locator('input').click();
+
+  const overlay = openOverlay(page);
+  await expect(overlay).toHaveAttribute('fullscreen', '');
+  await expect(overlay.locator('[part="backdrop"]')).toBeVisible();
+  // The sheet spans the full viewport width
+  const box = (await overlay.locator('[part="overlay"]').boundingBox())!;
+  expect(box.width).toBe(400);
+});
+
+test('min/max marks out-of-range typed values invalid', async ({ page }) => {
+  const picker = page.locator('date-time-combo-picker').nth(8);
   const input = picker.locator('input');
   await input.click();
   await input.fill('15.06.2027 10:00');

@@ -18,6 +18,12 @@ export interface TimeValue {
   seconds: number;
 }
 
+export interface TimeSteps {
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
 export interface TimeColumnsI18n {
   hours: string;
   minutes: string;
@@ -55,6 +61,8 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
   declare config: TimeConfig;
   declare value: TimeValue | null;
   declare i18n: TimeColumnsI18n;
+  declare steps: TimeSteps;
+  declare fallbackValue: TimeValue;
 
   static get is() {
     return 'dtcp-time-columns';
@@ -74,6 +82,19 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
 
       /** Accessible names for the columns and AM/PM labels. */
       i18n: {
+        type: Object,
+      },
+
+      /** Interval between the items of each column (e.g. minutes: 5). */
+      steps: {
+        type: Object,
+      },
+
+      /**
+       * The time used for the parts not yet chosen when the user makes the
+       * first selection while `value` is null.
+       */
+      fallbackValue: {
         type: Object,
       },
     };
@@ -121,6 +142,8 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
     super();
     this.config = DEFAULT_CONFIG;
     this.value = null;
+    this.steps = { hours: 1, minutes: 1, seconds: 1 };
+    this.fallbackValue = { hours: 0, minutes: 0, seconds: 0 };
     this.i18n = {
       hours: 'Hours',
       minutes: 'Minutes',
@@ -213,22 +236,37 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
   }
 
   /** @private */
+  __step(kind: 'hours' | 'minutes' | 'seconds'): number {
+    const step = this.steps ? this.steps[kind] : 1;
+    return Number.isInteger(step) && step >= 1 ? step : 1;
+  }
+
+  /** @private */
+  __range(length: number, step: number): number[] {
+    const values: number[] = [];
+    for (let i = 0; i < length; i += step) {
+      values.push(i);
+    }
+    return values;
+  }
+
+  /** @private */
   __columnItems(kind: ColumnKind): ColumnItem[] {
     const pad2 = (n: number) => String(n).padStart(2, '0');
     switch (kind) {
       case 'hours':
         if (this.config.use12h) {
           // 12, 1, 2, ... 11 like a clock face reading
-          return Array.from({ length: 12 }, (_, i) => {
+          return this.__range(12, this.__step('hours')).map((i) => {
             const display = i === 0 ? 12 : i;
             return { value: display, label: pad2(display) };
           });
         }
-        return Array.from({ length: 24 }, (_, i) => ({ value: i, label: pad2(i) }));
+        return this.__range(24, this.__step('hours')).map((i) => ({ value: i, label: pad2(i) }));
       case 'minutes':
-        return Array.from({ length: 60 }, (_, i) => ({ value: i, label: pad2(i) }));
+        return this.__range(60, this.__step('minutes')).map((i) => ({ value: i, label: pad2(i) }));
       case 'seconds':
-        return Array.from({ length: 60 }, (_, i) => ({ value: i, label: pad2(i) }));
+        return this.__range(60, this.__step('seconds')).map((i) => ({ value: i, label: pad2(i) }));
       case 'meridiem':
         return [
           { value: 'am', label: this.i18n.am },
@@ -271,7 +309,7 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
 
   /** @private */
   __select(kind: ColumnKind, itemValue: number | string) {
-    const current: TimeValue = this.value ?? { hours: 0, minutes: 0, seconds: 0 };
+    const current: TimeValue = this.value ?? this.fallbackValue ?? { hours: 0, minutes: 0, seconds: 0 };
     const next: TimeValue = { ...current };
 
     switch (kind) {

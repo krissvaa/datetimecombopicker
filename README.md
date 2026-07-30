@@ -12,6 +12,10 @@ no `ss` in the pattern → no seconds column, no `mm` → no minutes column,
 | --- | --- |
 | ![Default popup](docs/img/popup-default.png) | ![12h popup](docs/img/popup-12h.png) |
 
+| OK/Cancel action bar | Mobile bottom sheet |
+| --- | --- |
+| ![Action bar](docs/img/action-bar.png) | ![Fullscreen](docs/img/fullscreen.png) |
+
 This is a mono-repo with two packages:
 
 | Package | Artifact | For |
@@ -40,7 +44,22 @@ picker.addValueChangeListener(e -> System.out.println(e.getValue()));
 
 Works with `Binder` out of the box (`HasValue<..., LocalDateTime>`), supports label,
 helper, placeholder, tooltip, error message / invalid state, required indicator,
-min/max, auto-open, week numbers and i18n:
+min/max, auto-open, week numbers and i18n. Further options:
+
+```java
+picker.setMinuteStep(5);                    // minutes column: 00, 05, ... 55
+picker.setSecondStep(30);                   // seconds column: 00, 30
+picker.setInitialPosition(                  // popup position & defaults when empty
+        LocalDateTime.of(2030, 1, 15, 12, 30));
+picker.setAutoApply(false);                 // stage selections behind an OK/Cancel bar
+picker.setDateDisabledFunction(             // disable dates client-side (0-based month!)
+        "(d) => [0, 6].includes(new Date(d.year, d.month, d.day).getDay())");
+```
+
+On viewports smaller than 450px the popup becomes a fullscreen bottom sheet with a
+backdrop, and the time columns stack below the calendar.
+
+I18n example:
 
 ```java
 picker.setI18n(new DateTimeComboPickerI18n()

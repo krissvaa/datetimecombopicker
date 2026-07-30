@@ -14,8 +14,10 @@ import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mix
 import './vendor/dtcp-month-calendar.js';
 import './dtcp-time-columns.js';
 import { dateAllowed, dateEquals } from './vendor/date-picker-helper.js';
-import type { TimeColumns, TimeValue } from './dtcp-time-columns.js';
+import type { TimeColumns, TimeSteps, TimeValue } from './dtcp-time-columns.js';
 import type { TimeConfig } from './dtcp-format.js';
+
+export type IsDateDisabledFn = (date: { day: number; month: number; year: number }) => boolean;
 
 export interface DtcpI18n {
   monthNames: string[];
@@ -24,6 +26,8 @@ export interface DtcpI18n {
   firstDayOfWeek: number;
   today: string;
   year: string;
+  ok: string;
+  cancel: string;
   formatTitle: (monthName: string, fullYear: number) => string;
   prevMonth: string;
   nextMonth: string;
@@ -55,6 +59,8 @@ export const DEFAULT_I18N: DtcpI18n = {
   firstDayOfWeek: 0,
   today: 'Today',
   year: 'Year',
+  ok: 'OK',
+  cancel: 'Cancel',
   formatTitle: (monthName, fullYear) => `${monthName} ${fullYear}`,
   prevMonth: 'Previous month',
   nextMonth: 'Next month',
@@ -95,6 +101,10 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
   declare showWeekNumbers: boolean;
   declare initialPosition: Date | null;
   declare focusedDate: Date | null;
+  declare isDateDisabled: IsDateDisabledFn | undefined;
+  declare steps: TimeSteps;
+  declare referenceTime: TimeValue | null;
+  declare showActions: boolean;
   declare _displayedMonth: Date;
   declare _yearViewOpen: boolean;
 
@@ -146,6 +156,26 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
         type: Object,
       },
 
+      /** A function that disables individual dates ({day, month, year}, month 0-based). */
+      isDateDisabled: {
+        type: Object,
+      },
+
+      /** Interval between the items of each time column. */
+      steps: {
+        type: Object,
+      },
+
+      /** The time used for parts not yet chosen on the first selection. */
+      referenceTime: {
+        type: Object,
+      },
+
+      /** Whether the Cancel/OK action bar is shown. */
+      showActions: {
+        type: Boolean,
+      },
+
       /** @protected */
       _displayedMonth: {
         type: Object,
@@ -162,9 +192,43 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     return css`
       :host {
         display: flex;
+        flex-direction: column;
         overflow: hidden;
         height: 100%;
         box-sizing: border-box;
+      }
+
+      [part='main'] {
+        display: flex;
+        flex: auto;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      [part='action-bar'] {
+        display: flex;
+        flex: none;
+        justify-content: flex-end;
+      }
+
+      [part$='-action-button'] {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+
+      /* Fullscreen (mobile): stack the calendar above the time columns */
+      :host([fullscreen]) [part='main'] {
+        flex-direction: column;
+      }
+
+      :host([fullscreen]) [part='time-section'] {
+        justify-content: center;
       }
 
       [part='calendar-section'] {
@@ -255,6 +319,10 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     super();
     this.selectedDate = null;
     this.timeValue = null;
+    this.isDateDisabled = undefined;
+    this.steps = { hours: 1, minutes: 1, seconds: 1 };
+    this.referenceTime = null;
+    this.showActions = false;
     this.timeConfig = {
       hasDate: true,
       hasTime: true,
@@ -281,6 +349,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     const title = this.i18n.formatTitle(this.i18n.monthNames[month.getMonth()], month.getFullYear());
 
     return html`
+      <div part="main">
       <div part="calendar-section" ?hidden="${!config.hasDate}">
         <div part="calendar-header">
           <button
@@ -331,6 +400,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
                 .i18n="${this.i18n}"
                 .minDate="${this.minDate}"
                 .maxDate="${this.maxDate}"
+                .isDateDisabled="${this.isDateDisabled ?? (() => false)}"
                 .showWeekNumbers="${this.showWeekNumbers}"
                 @date-tap="${this.__onDateTap}"
                 @keydown="${this.__onCalendarKeyDown}"
@@ -344,6 +414,8 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
         <dtcp-time-columns
           .config="${config}"
           .value="${this.timeValue}"
+          .steps="${this.steps}"
+          .fallbackValue="${this.referenceTime ?? { hours: 0, minutes: 0, seconds: 0 }}"
           .i18n="${{
             hours: this.i18n.hours,
             minutes: this.i18n.minutes,
@@ -355,8 +427,23 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
           @time-changed="${this.__onTimeChanged}"
         ></dtcp-time-columns>
       </div>
+      </div>
+      <div part="action-bar" ?hidden="${!this.showActions}">
+        <button part="cancel-action-button" @click="${this.__onCancelClick}">${this.i18n.cancel}</button>
+        <button part="ok-action-button" @click="${this.__onOkClick}">${this.i18n.ok}</button>
+      </div>
       ${nothing}
     `;
+  }
+
+  /** @private */
+  __onOkClick() {
+    this.dispatchEvent(new CustomEvent('apply-action'));
+  }
+
+  /** @private */
+  __onCancelClick() {
+    this.dispatchEvent(new CustomEvent('cancel-action'));
   }
 
   /** Resets the view state and scrolls time columns; called when the overlay opens. */
@@ -538,7 +625,11 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       case 'Enter':
       case ' ': {
         const date = this.focusedDate;
-        if (date && dateAllowed(date, this.minDate, this.maxDate) && !dateEquals(date, this.selectedDate)) {
+        if (
+          date &&
+          dateAllowed(date, this.minDate, this.maxDate, this.isDateDisabled) &&
+          !dateEquals(date, this.selectedDate)
+        ) {
           this.dispatchEvent(new CustomEvent('date-selected', { detail: { date } }));
         }
         break;

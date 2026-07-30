@@ -30,6 +30,8 @@ public class DateTimeComboPickerI18n implements Serializable {
     private int firstDayOfWeek;
     private String today;
     private String year;
+    private String ok;
+    private String cancel;
     private String prevMonth;
     private String nextMonth;
     private String hours;
@@ -164,6 +166,50 @@ public class DateTimeComboPickerI18n implements Serializable {
      */
     public DateTimeComboPickerI18n setYear(String year) {
         this.year = year;
+        return this;
+    }
+
+    /**
+     * Gets the label of the OK button in the action bar (shown when
+     * auto-apply is disabled).
+     *
+     * @return the label, or {@code null} for the default
+     */
+    public String getOk() {
+        return ok;
+    }
+
+    /**
+     * Sets the label of the OK button in the action bar.
+     *
+     * @param ok
+     *            the label
+     * @return this instance for method chaining
+     */
+    public DateTimeComboPickerI18n setOk(String ok) {
+        this.ok = ok;
+        return this;
+    }
+
+    /**
+     * Gets the label of the Cancel button in the action bar (shown when
+     * auto-apply is disabled).
+     *
+     * @return the label, or {@code null} for the default
+     */
+    public String getCancel() {
+        return cancel;
+    }
+
+    /**
+     * Sets the label of the Cancel button in the action bar.
+     *
+     * @param cancel
+     *            the label
+     * @return this instance for method chaining
+     */
+    public DateTimeComboPickerI18n setCancel(String cancel) {
+        this.cancel = cancel;
         return this;
     }
 

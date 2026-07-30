@@ -64,6 +64,32 @@ public class DemoView extends VerticalLayout {
         hoursOnly.setFormat("dd.MM.yyyy HH");
         addWithValueOutput(hoursOnly);
 
+        // Time steps
+        DateTimeComboPicker stepped = new DateTimeComboPicker(
+                "5-minute steps (dd.MM.yyyy HH:mm)");
+        stepped.setMinuteStep(5);
+        addWithValueOutput(stepped);
+
+        // Disabled dates (weekends)
+        DateTimeComboPicker weekdaysOnly = new DateTimeComboPicker(
+                "Weekdays only");
+        weekdaysOnly.setDateDisabledFunction(
+                "(d) => [0, 6].includes(new Date(d.year, d.month, d.day).getDay())");
+        weekdaysOnly.setErrorMessage("Weekends are not allowed");
+        addWithValueOutput(weekdaysOnly);
+
+        // Action bar (staged selection)
+        DateTimeComboPicker staged = new DateTimeComboPicker(
+                "With OK/Cancel (autoApply=false)");
+        staged.setAutoApply(false);
+        addWithValueOutput(staged);
+
+        // Initial position
+        DateTimeComboPicker positioned = new DateTimeComboPicker(
+                "Initial position 2030-01-15 12:30");
+        positioned.setInitialPosition(LocalDateTime.of(2030, 1, 15, 12, 30));
+        addWithValueOutput(positioned);
+
         // Min/max
         DateTimeComboPicker minMax = new DateTimeComboPicker(
                 "Min/max (this year only)");

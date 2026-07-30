@@ -48,6 +48,9 @@ registerStyles(
     menuOverlay,
     css`
       [part='overlay'] {
+        /* Size the popup by its content instead of stretching to the viewport */
+        flex: none;
+        height: auto;
         overflow: hidden;
         -webkit-tap-highlight-color: transparent;
       }

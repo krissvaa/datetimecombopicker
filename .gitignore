@@ -5,9 +5,19 @@ web-component/dist/
 # Maven
 flow/target/
 
-# Vaadin
+# Vaadin generated files (demo app tooling)
 flow/frontend/generated/
 flow/src/main/frontend/generated/
+flow/src/main/frontend/date-time-combo-picker/
+flow/src/main/frontend/index.html
+flow/package.json
+flow/package-lock.json
+flow/node_modules/
+flow/vite.config.ts
+flow/vite.generated.ts
+flow/tsconfig.json
+flow/types.d.ts
+flow/src/main/dev-bundle/
 flow/src/main/dev-bundle/
 flow/src/main/bundles/
 flow/vite.generated.ts

@@ -224,7 +224,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
           .selectedDate="${this.__selectedDate()}"
           .timeValue="${this.__timeValue()}"
           .timeConfig="${this._timeConfig}"
-          .i18n="${this.i18n}"
+          .i18n="${{ ...DEFAULT_I18N, ...this.i18n }}"
           .minDate="${this.__minMaxDate(this.min)}"
           .maxDate="${this.__minMaxDate(this.max)}"
           .showWeekNumbers="${this.showWeekNumbers}"

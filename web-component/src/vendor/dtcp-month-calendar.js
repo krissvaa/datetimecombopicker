@@ -5,7 +5,9 @@
  *
  * Forked for DateTimeComboPicker from vaadin/web-components v24.8.14
  * (packages/date-picker/src/vaadin-lit-month-calendar.js).
- * Changes: element retagged to <dtcp-month-calendar>, imports adjusted. See NOTICE.
+ * Changes: element retagged to <dtcp-month-calendar>, imports adjusted, and
+ * render() made defensive about not-yet-computed properties (on Vaadin 24.4
+ * PolylitMixin runs computed observers only after the first render). See NOTICE.
  */
 import { html, LitElement } from 'lit';
 import { defineCustomElement } from '@vaadin/component-base/src/define.js';
@@ -29,8 +31,8 @@ class MonthCalendar extends MonthCalendarMixin(ThemableMixin(PolylitMixin(LitEle
 
   /** @protected */
   render() {
-    const weekDayNames = this.__computeWeekDayNames(this.i18n, this.showWeekNumbers);
-    const weeks = this._weeks;
+    const weekDayNames = this.__computeWeekDayNames(this.i18n, this.showWeekNumbers) || [];
+    const weeks = this._weeks || [];
     const hideWeekSeparator = !this.__computeShowWeekSeparator(this.showWeekNumbers, this.i18n);
 
     return html`

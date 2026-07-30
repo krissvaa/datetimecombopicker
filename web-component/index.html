@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>date-time-combo-picker dev</title>
+    <style>
+      body {
+        font-family: var(--lumo-font-family, sans-serif);
+        margin: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        max-width: 420px;
+      }
+      output {
+        font-family: monospace;
+        font-size: 0.85rem;
+        color: gray;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <date-time-combo-picker
+        id="p1"
+        label="Default (dd.MM.yyyy HH:mm)"
+        clear-button-visible
+      ></date-time-combo-picker>
+      <output id="o1"></output>
+    </div>
+
+    <div>
+      <date-time-combo-picker
+        id="p2"
+        label="With seconds (dd.MM.yyyy HH:mm:ss)"
+        format="dd.MM.yyyy HH:mm:ss"
+        value="2026-07-30T13:37:42"
+      ></date-time-combo-picker>
+      <output id="o2"></output>
+    </div>
+
+    <div>
+      <date-time-combo-picker
+        id="p3"
+        label="US 12h (M/d/yyyy h:mm a)"
+        format="M/d/yyyy h:mm a"
+      ></date-time-combo-picker>
+      <output id="o3"></output>
+    </div>
+
+    <div>
+      <date-time-combo-picker
+        id="p4"
+        label="Hours only (dd.MM.yyyy HH)"
+        format="dd.MM.yyyy HH"
+      ></date-time-combo-picker>
+      <output id="o4"></output>
+    </div>
+
+    <div>
+      <date-time-combo-picker id="p5" label="Date only (dd.MM.yyyy)" format="dd.MM.yyyy"></date-time-combo-picker>
+      <output id="o5"></output>
+    </div>
+
+    <div>
+      <date-time-combo-picker id="p6" label="Time only (HH:mm:ss)" format="HH:mm:ss"></date-time-combo-picker>
+      <output id="o6"></output>
+    </div>
+
+    <script type="module">
+      import './src/date-time-combo-picker-lumo.ts';
+
+      for (let i = 1; i <= 6; i++) {
+        const picker = document.getElementById(`p${i}`);
+        const out = document.getElementById(`o${i}`);
+        picker.addEventListener('value-changed', (e) => {
+          out.textContent = `value: ${JSON.stringify(e.detail.value)}`;
+        });
+      }
+    </script>
+  </body>
+</html>

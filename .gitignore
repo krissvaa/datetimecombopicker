@@ -1,0 +1,21 @@
+# Node
+node_modules/
+web-component/dist/
+
+# Maven
+flow/target/
+
+# Vaadin
+flow/frontend/generated/
+flow/src/main/frontend/generated/
+flow/src/main/dev-bundle/
+flow/src/main/bundles/
+flow/vite.generated.ts
+*.lock
+!package-lock.json
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store

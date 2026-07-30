@@ -21,7 +21,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('demo page shows all pickers', async ({ page }) => {
-  await expect(page.locator('date-time-combo-picker')).toHaveCount(11);
+  await expect(page.locator('date-time-combo-picker')).toHaveCount(12);
 });
 
 test('mouse: pick a date and a time in one popup', async ({ page }) => {
@@ -202,8 +202,29 @@ test('fullscreen bottom sheet on small viewports', async ({ page }) => {
   expect(box.width).toBe(400);
 });
 
-test('min/max marks out-of-range typed values invalid', async ({ page }) => {
+test('analog clock: tap an hour, auto-advance, tap minutes', async ({ page }) => {
   const picker = page.locator('date-time-combo-picker').nth(8);
+  await picker.locator('input').click();
+  const overlay = openOverlay(page);
+
+  const face = overlay.locator('[part="clock-face"]');
+  await expect(face).toBeVisible();
+  await expect(overlay.locator('dtcp-time-columns')).toHaveCount(0);
+
+  // Tap 3 o'clock on the outer ring (hour 3)
+  const box = (await face.boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2 + box.width * 0.39, box.y + box.height / 2);
+  // Auto-advance to the minutes view
+  await expect(overlay.locator('[part~="readout-segment-active"]').nth(0)).toHaveText('00', { timeout: 2000 });
+  // Tap 6 o'clock (minute 30)
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2 + box.height * 0.39);
+
+  const value = await pickerValue(picker);
+  expect(value).toMatch(/T03:30:00$/);
+});
+
+test('min/max marks out-of-range typed values invalid', async ({ page }) => {
+  const picker = page.locator('date-time-combo-picker').nth(9);
   const input = picker.locator('input');
   await input.click();
   await input.fill('15.06.2027 10:00');

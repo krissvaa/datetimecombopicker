@@ -391,6 +391,28 @@ public class DateTimeComboPicker
     }
 
     /**
+     * Sets the time selector shown in the popup: sliding columns (the
+     * default) or an analog clock face.
+     *
+     * @param timeView
+     *            the time view, not {@code null}
+     */
+    public void setTimeView(TimeView timeView) {
+        java.util.Objects.requireNonNull(timeView, "timeView must not be null");
+        getElement().setProperty("timeView", timeView.getPropertyValue());
+    }
+
+    /**
+     * Gets the time selector shown in the popup.
+     *
+     * @return the time view
+     */
+    public TimeView getTimeView() {
+        return TimeView.fromPropertyValue(
+                getElement().getProperty("timeView", "columns"));
+    }
+
+    /**
      * Sets whether ISO-8601 week numbers are shown in the calendar. Only
      * supported when the first day of the week is Monday
      * ({@code i18n.firstDayOfWeek} = 1).

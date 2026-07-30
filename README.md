@@ -12,9 +12,9 @@ no `ss` in the pattern → no seconds column, no `mm` → no minutes column,
 | --- | --- |
 | ![Default popup](docs/img/popup-default.png) | ![12h popup](docs/img/popup-12h.png) |
 
-| OK/Cancel action bar | Mobile bottom sheet |
-| --- | --- |
-| ![Action bar](docs/img/action-bar.png) | ![Fullscreen](docs/img/fullscreen.png) |
+| OK/Cancel action bar | Mobile bottom sheet | Analog clock |
+| --- | --- | --- |
+| ![Action bar](docs/img/action-bar.png) | ![Fullscreen](docs/img/fullscreen.png) | ![Analog clock](docs/img/clock.png) |
 
 This is a mono-repo with two packages:
 
@@ -54,6 +54,7 @@ picker.setInitialPosition(                  // popup position & defaults when em
 picker.setAutoApply(false);                 // stage selections behind an OK/Cancel bar
 picker.setDateDisabledFunction(             // disable dates client-side (0-based month!)
         "(d) => [0, 6].includes(new Date(d.year, d.month, d.day).getDay())");
+picker.setTimeView(TimeView.CLOCK);         // analog clock dial instead of columns
 ```
 
 On viewports smaller than 450px the popup becomes a fullscreen bottom sheet with a
@@ -153,7 +154,10 @@ against the consuming application's Vaadin 24 platform packages.
   component inherits Lumo theming and form-field behavior.
 - The time selector is a set of free-scrolling columns with click-to-select and
   keyboard support (`ArrowUp`/`ArrowDown`/`Home`/`End`), modeled on the MUI X
-  digital clock.
+  digital clock. Alternatively, `time-view="clock"` renders an analog dial
+  (MUI TimeClock / Android style): tap or drag to pick, double ring for 24h,
+  digital readout to switch between hour/minute/second views, `role="slider"`
+  keyboard support, and automatic view advancement.
 - **Calendar keyboard navigation**: `ArrowDown` in the field moves focus into the
   calendar; arrows move by day/week, `PageUp`/`PageDown` by month
   (`Shift` for year), `Home`/`End` to first/last day of the month,

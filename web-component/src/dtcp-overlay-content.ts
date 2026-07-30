@@ -13,9 +13,13 @@ import { PolylitMixin } from '@vaadin/component-base/src/polylit-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
 import './vendor/dtcp-month-calendar.js';
 import './dtcp-time-columns.js';
+import './dtcp-time-clock.js';
 import { dateAllowed, dateEquals } from './vendor/date-picker-helper.js';
 import type { TimeColumns, TimeSteps, TimeValue } from './dtcp-time-columns.js';
+import type { TimeClock } from './dtcp-time-clock.js';
 import type { TimeConfig } from './dtcp-format.js';
+
+export type TimeViewKind = 'columns' | 'clock';
 
 export type IsDateDisabledFn = (date: { day: number; month: number; year: number }) => boolean;
 
@@ -105,6 +109,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
   declare steps: TimeSteps;
   declare referenceTime: TimeValue | null;
   declare showActions: boolean;
+  declare timeView: TimeViewKind;
   declare _displayedMonth: Date;
   declare _yearViewOpen: boolean;
 
@@ -174,6 +179,11 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       /** Whether the Cancel/OK action bar is shown. */
       showActions: {
         type: Boolean,
+      },
+
+      /** The time selector to render: scroll columns or an analog clock. */
+      timeView: {
+        type: String,
       },
 
       /** @protected */
@@ -323,6 +333,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     this.steps = { hours: 1, minutes: 1, seconds: 1 };
     this.referenceTime = null;
     this.showActions = false;
+    this.timeView = 'columns';
     this.timeConfig = {
       hasDate: true,
       hasTime: true,
@@ -411,21 +422,27 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
             `}
       </div>
       <div part="time-section" ?hidden="${!config.hasTime}">
-        <dtcp-time-columns
-          .config="${config}"
-          .value="${this.timeValue}"
-          .steps="${this.steps}"
-          .fallbackValue="${this.referenceTime ?? { hours: 0, minutes: 0, seconds: 0 }}"
-          .i18n="${{
-            hours: this.i18n.hours,
-            minutes: this.i18n.minutes,
-            seconds: this.i18n.seconds,
-            meridiem: this.i18n.meridiem,
-            am: this.i18n.am,
-            pm: this.i18n.pm,
-          }}"
-          @time-changed="${this.__onTimeChanged}"
-        ></dtcp-time-columns>
+        ${this.timeView === 'clock'
+          ? html`
+              <dtcp-time-clock
+                .config="${config}"
+                .value="${this.timeValue}"
+                .steps="${this.steps}"
+                .fallbackValue="${this.referenceTime ?? { hours: 0, minutes: 0, seconds: 0 }}"
+                .i18n="${this.__timeI18n()}"
+                @time-changed="${this.__onTimeChanged}"
+              ></dtcp-time-clock>
+            `
+          : html`
+              <dtcp-time-columns
+                .config="${config}"
+                .value="${this.timeValue}"
+                .steps="${this.steps}"
+                .fallbackValue="${this.referenceTime ?? { hours: 0, minutes: 0, seconds: 0 }}"
+                .i18n="${this.__timeI18n()}"
+                @time-changed="${this.__onTimeChanged}"
+              ></dtcp-time-columns>
+            `}
       </div>
       </div>
       <div part="action-bar" ?hidden="${!this.showActions}">
@@ -446,7 +463,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     this.dispatchEvent(new CustomEvent('cancel-action'));
   }
 
-  /** Resets the view state and scrolls time columns; called when the overlay opens. */
+  /** Resets the view state and the time selector; called when the overlay opens. */
   initialize() {
     const position = this.selectedDate ?? this.initialPosition ?? new Date();
     this._displayedMonth = new Date(position.getFullYear(), position.getMonth(), 1);
@@ -456,6 +473,22 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     if (columns) {
       requestAnimationFrame(() => columns.scrollToValue(true));
     }
+    const clock = this.shadowRoot!.querySelector<TimeClock>('dtcp-time-clock');
+    if (clock) {
+      clock.initialize();
+    }
+  }
+
+  /** @private */
+  __timeI18n() {
+    return {
+      hours: this.i18n.hours,
+      minutes: this.i18n.minutes,
+      seconds: this.i18n.seconds,
+      meridiem: this.i18n.meridiem,
+      am: this.i18n.am,
+      pm: this.i18n.pm,
+    };
   }
 
   /** Moves keyboard focus onto the focused date cell of the calendar. */

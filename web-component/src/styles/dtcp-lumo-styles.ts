@@ -335,6 +335,113 @@ registerStyles(
   { moduleId: 'lumo-dtcp-time-columns' },
 );
 
+/* ----------------------------------------------------------- time clock */
+
+registerStyles(
+  'dtcp-time-clock',
+  css`
+    :host {
+      font-family: var(--lumo-font-family);
+      color: var(--lumo-body-text-color);
+      padding: var(--lumo-space-s);
+      gap: var(--lumo-space-s);
+      --_face-size: calc(var(--lumo-size-m) * 6.5);
+    }
+
+    [part='clock-readout'] {
+      font-size: var(--lumo-font-size-xl);
+      font-variant-numeric: tabular-nums;
+      gap: var(--lumo-space-xs);
+    }
+
+    [part~='readout-segment'] {
+      padding: 0 var(--lumo-space-xs);
+      border-radius: var(--lumo-border-radius-m);
+      color: var(--lumo-secondary-text-color);
+      cursor: var(--lumo-clickable-cursor);
+    }
+
+    [part~='readout-segment']:hover {
+      background-color: var(--lumo-contrast-5pct);
+    }
+
+    [part~='readout-segment-active'] {
+      color: var(--lumo-primary-text-color);
+      background-color: var(--lumo-primary-color-10pct);
+    }
+
+    [part='readout-separator'] {
+      color: var(--lumo-tertiary-text-color);
+    }
+
+    [part='meridiem-toggle'] {
+      display: inline-flex;
+      flex-direction: column;
+      margin-inline-start: var(--lumo-space-s);
+      gap: 2px;
+      vertical-align: middle;
+    }
+
+    [part~='meridiem-button'] {
+      font-size: var(--lumo-font-size-xs);
+      font-weight: 500;
+      line-height: 1;
+      padding: var(--lumo-space-xs);
+      border-radius: var(--lumo-border-radius-s);
+      color: var(--lumo-secondary-text-color);
+      cursor: var(--lumo-clickable-cursor);
+    }
+
+    [part~='meridiem-button']:hover {
+      background-color: var(--lumo-contrast-5pct);
+    }
+
+    [part~='meridiem-button-selected'] {
+      color: var(--lumo-primary-contrast-color);
+      background-color: var(--vaadin-selection-color, var(--lumo-primary-color));
+    }
+
+    [part='clock-face'] {
+      background-color: var(--lumo-contrast-5pct);
+      cursor: var(--lumo-clickable-cursor);
+    }
+
+    [part='clock-face']:focus-visible {
+      box-shadow: 0 0 0 2px var(--lumo-primary-color-50pct);
+    }
+
+    [part~='clock-number'] {
+      width: var(--lumo-size-s);
+      height: var(--lumo-size-s);
+      border-radius: 50%;
+      font-size: var(--lumo-font-size-s);
+      font-variant-numeric: tabular-nums;
+    }
+
+    [part~='clock-number-inner'] {
+      font-size: var(--lumo-font-size-xs);
+      color: var(--lumo-secondary-text-color);
+    }
+
+    [part~='clock-number-selected'],
+    [part~='clock-number-inner'][part~='clock-number-selected'] {
+      color: var(--lumo-primary-contrast-color);
+    }
+
+    [part='clock-hand'] {
+      background: var(--vaadin-selection-color, var(--lumo-primary-color));
+    }
+
+    [part='clock-hand']::before {
+      width: var(--lumo-size-s);
+      height: var(--lumo-size-s);
+      background-color: var(--vaadin-selection-color, var(--lumo-primary-color));
+      opacity: 0.9;
+    }
+  `,
+  { moduleId: 'lumo-dtcp-time-clock' },
+);
+
 /* -------------------------------------------------------- month calendar
  * Adapted from packages/date-picker/theme/lumo/vaadin-month-calendar-styles.js
  * (vaadin/web-components v24.8.14, Apache-2.0).

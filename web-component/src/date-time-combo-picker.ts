@@ -33,7 +33,7 @@ import {
 } from './dtcp-format.js';
 import type { DateTimeParts, TimeConfig, Token } from './dtcp-format.js';
 import { DEFAULT_I18N } from './dtcp-overlay-content.js';
-import type { DtcpI18n, DtcpOverlayContent, IsDateDisabledFn } from './dtcp-overlay-content.js';
+import type { DtcpI18n, DtcpOverlayContent, IsDateDisabledFn, TimeViewKind } from './dtcp-overlay-content.js';
 import type { DtcpOverlay } from './dtcp-overlay.js';
 import type { TimeValue } from './dtcp-time-columns.js';
 
@@ -82,6 +82,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   declare isDateDisabled: IsDateDisabledFn | undefined;
   declare initialPosition: string | null;
   declare autoApply: boolean;
+  declare timeView: TimeViewKind;
   declare _fullscreen: boolean;
   declare _stagedParts: DateTimeParts | null;
   declare _timeConfig: TimeConfig;
@@ -214,6 +215,17 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
         sync: true,
       },
 
+      /**
+       * The time selector shown in the popup: `columns` (default, sliding
+       * MUI-style columns) or `clock` (an analog clock face with one view
+       * per time part).
+       */
+      timeView: {
+        type: String,
+        value: 'columns',
+        sync: true,
+      },
+
       /** @protected */
       _fullscreen: {
         type: Boolean,
@@ -313,6 +325,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
           .steps="${{ hours: this.hourStep, minutes: this.minuteStep, seconds: this.secondStep }}"
           .referenceTime="${this.__referenceTime()}"
           .showActions="${!this.autoApply}"
+          .timeView="${this.timeView}"
           .initialPosition="${this.__initialPositionDate()}"
           .showWeekNumbers="${this.showWeekNumbers}"
           @date-selected="${this.__onDateSelected}"

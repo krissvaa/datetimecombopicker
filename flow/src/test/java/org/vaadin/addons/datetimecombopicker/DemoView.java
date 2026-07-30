@@ -90,6 +90,12 @@ public class DemoView extends VerticalLayout {
         positioned.setInitialPosition(LocalDateTime.of(2030, 1, 15, 12, 30));
         addWithValueOutput(positioned);
 
+        // Analog clock time selector
+        DateTimeComboPicker clock = new DateTimeComboPicker(
+                "Analog clock (timeView=CLOCK)");
+        clock.setTimeView(TimeView.CLOCK);
+        addWithValueOutput(clock);
+
         // Min/max
         DateTimeComboPicker minMax = new DateTimeComboPicker(
                 "Min/max (this year only)");

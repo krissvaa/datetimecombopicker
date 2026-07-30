@@ -197,6 +197,17 @@ class DateTimeComboPickerTest {
     }
 
     @Test
+    void timeView_roundTrip() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        assertEquals(TimeView.COLUMNS, picker.getTimeView());
+        picker.setTimeView(TimeView.CLOCK);
+        assertEquals(TimeView.CLOCK, picker.getTimeView());
+        assertEquals("clock", picker.getElement().getProperty("timeView"));
+        org.junit.jupiter.api.Assertions.assertThrows(
+                NullPointerException.class, () -> picker.setTimeView(null));
+    }
+
+    @Test
     void valueChangeListener_firesOnServerSideChange() {
         DateTimeComboPicker picker = new DateTimeComboPicker();
         LocalDateTime[] observed = new LocalDateTime[1];

@@ -234,6 +234,51 @@ describe('action bar (autoApply=false)', () => {
   });
 });
 
+describe('column fit (no scrolling when items fit)', () => {
+  function column(picker: DateTimeComboPicker, kind: string): HTMLElement {
+    return timeColumns(picker).shadowRoot!.querySelector(`[data-column="${kind}"]`)!;
+  }
+
+  it('marks short columns with the fits attribute', async () => {
+    const picker = await pickerFixture(
+      html`<date-time-combo-picker format="M/d/yyyy h:mm a"></date-time-combo-picker>`,
+    );
+    await open(picker);
+    expect(column(picker, 'meridiem').hasAttribute('fits')).to.be.true;
+    expect(column(picker, 'minutes').hasAttribute('fits')).to.be.false;
+  });
+
+  it('does not scroll a fitting column on selection', async () => {
+    const picker = await pickerFixture(
+      html`<date-time-combo-picker format="M/d/yyyy h:mm a"></date-time-combo-picker>`,
+    );
+    picker.value = '2026-07-15T03:00:00';
+    await open(picker);
+
+    const meridiem = column(picker, 'meridiem');
+    meridiem.querySelector<HTMLElement>('[data-value="pm"]')!.click();
+    await nextFrame();
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100); // wait out any (unwanted) smooth scroll
+    });
+
+    expect(picker.value).to.equal('2026-07-15T15:00:00');
+    expect(meridiem.scrollTop).to.equal(0);
+    // Both AM and PM remain fully visible
+    const am = meridiem.querySelector<HTMLElement>('[data-value="am"]')!;
+    expect(am.getBoundingClientRect().top).to.be.at.least(meridiem.getBoundingClientRect().top);
+  });
+
+  it('marks stepped columns that fit', async () => {
+    const picker = await pickerFixture(
+      html`<date-time-combo-picker format="dd.MM.yyyy HH" hour-step="6"></date-time-combo-picker>`,
+    );
+    await open(picker);
+    // 4 items (00, 06, 12, 18) fit easily
+    expect(column(picker, 'hours').hasAttribute('fits')).to.be.true;
+  });
+});
+
 describe('fullscreen', () => {
   it('reflects the fullscreen state to the overlay and content', async () => {
     const picker = await pickerFixture();

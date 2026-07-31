@@ -65,6 +65,8 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
   declare steps: TimeSteps;
   declare fallbackValue: TimeValue;
 
+  private __resizeObserver?: ResizeObserver;
+
   static get is() {
     return 'dtcp-time-columns';
   }
@@ -129,6 +131,11 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
         flex: 0 0 calc(100% - var(--_dtcp-cell-height, 2rem));
       }
 
+      /* Columns whose items fit (e.g. AM/PM) need no spacer and no scrolling */
+      [part='column'][fits]::after {
+        content: none;
+      }
+
       [part~='time-cell'] {
         flex: none;
         cursor: pointer;
@@ -191,14 +198,34 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
     `;
   }
 
+  /** @protected */
+  connectedCallback() {
+    super.connectedCallback();
+    this.__resizeObserver ??= new ResizeObserver(() => this.__updateColumnFits());
+    this.__resizeObserver.observe(this);
+  }
+
+  /** @protected */
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.__resizeObserver?.disconnect();
+  }
+
+  /** @protected */
+  updated(props: Map<string, unknown>) {
+    super.updated(props);
+    this.__updateColumnFits();
+  }
+
   /**
-   * Scrolls every column so that its selected item is at the top.
+   * Scrolls every scrollable column so that its selected item is at the top.
+   * Columns whose items fit without scrolling are left alone.
    * Pass `instant = true` to jump without animation (used on overlay open).
    */
   scrollToValue(instant = false) {
     this.shadowRoot!.querySelectorAll<HTMLElement>('[part="column"]').forEach((column) => {
       const selected = column.querySelector<HTMLElement>('[part~="time-cell-selected"]');
-      if (selected) {
+      if (selected && column.scrollHeight > column.clientHeight) {
         const top = selected.offsetTop - column.offsetTop;
         if (instant) {
           const behavior = column.style.scrollBehavior;
@@ -209,6 +236,22 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
           column.scrollTo({ top, behavior: 'smooth' });
         }
       }
+    });
+  }
+
+  /**
+   * Marks columns whose items fit into the visible height with a `fits`
+   * attribute: they get no end spacer and are never scrolled.
+   * @private
+   */
+  __updateColumnFits() {
+    this.shadowRoot!.querySelectorAll<HTMLElement>('[part="column"]').forEach((column) => {
+      const cells = column.querySelectorAll<HTMLElement>('[part~="time-cell"]');
+      let itemsHeight = 0;
+      cells.forEach((cell) => {
+        itemsHeight += cell.offsetHeight;
+      });
+      column.toggleAttribute('fits', itemsHeight <= column.clientHeight);
     });
   }
 

@@ -113,6 +113,29 @@ selection); a pattern with only time letters shows only the time columns.
 Examples: `dd.MM.yyyy HH:mm` (default), `dd.MM.yyyy HH:mm:ss`, `M/d/yyyy h:mm a`,
 `dd.MM.yyyy HH`, `yyyy-MM-dd`, `HH:mm:ss`.
 
+## API overview
+
+| Java (Flow) | Element property / attribute | Description |
+| --- | --- | --- |
+| `setValue(LocalDateTime)` | `value` | The selected date-time (element: ISO-8601 string, `''` when empty) |
+| `setFormat(String)` | `format` | Pattern driving display, parsing and which time parts are shown |
+| `setMin(LocalDateTime)` / `setMax(...)` | `min` / `max` | Allowed range; out-of-range values are invalid |
+| `setTimeView(TimeView)` | `time-view` | `COLUMNS` (default) or `CLOCK` (analog dial) |
+| `setHourStep(int)` / `setMinuteStep(int)` / `setSecondStep(int)` | `hour-step` / `minute-step` / `second-step` | Interval between selectable time values |
+| `setDateDisabledFunction(String)` | `isDateDisabled` (function property) | Disables individual dates; disabled dates fail validation |
+| `setInitialPosition(LocalDateTime)` | `initial-position` | Popup position and date/time defaults while the field is empty |
+| `setAutoApply(boolean)` | `auto-apply` | `false` stages selections behind an OK/Cancel action bar |
+| `setOpened(boolean)` | `opened` | Opens/closes the popup |
+| `setAutoOpen(boolean)` | `auto-open-disabled` (inverted) | Whether the popup opens on field interaction |
+| `setShowWeekNumbers(boolean)` | `show-week-numbers` | ISO week numbers (requires first day of week = Monday) |
+| `setClearButtonVisible(boolean)` | `clear-button-visible` | Clear button in the field |
+| `setI18n(DateTimeComboPickerI18n)` | `i18n` | Month/weekday names, button labels, first day of week |
+| `setLabel`, `setPlaceholder`, `setHelperText`, `setErrorMessage`, `setRequiredIndicatorVisible`, `setEnabled`, `setReadOnly`, `setTooltipText` | standard field properties | Inherited Vaadin field API; works with `Binder` |
+
+Events: `value-changed`, `opened-changed`, `invalid-changed`, `change`
+(Flow: `addValueChangeListener`). Full reference in the
+[element JSDoc](web-component/src/date-time-combo-picker.ts) and the Javadoc.
+
 ## Development
 
 ```sh
@@ -152,10 +175,10 @@ against the consuming application's Vaadin 24 platform packages.
 - The popup is composed from the public `@vaadin/overlay` mixins, the field chrome
   from `@vaadin/field-base` — the same recipe Vaadin's own pickers use, so the
   component inherits Lumo theming and form-field behavior.
-- The time selector is a set of free-scrolling columns with click-to-select and
-  keyboard support (`ArrowUp`/`ArrowDown`/`Home`/`End`), modeled on the MUI X
-  digital clock. Alternatively, `time-view="clock"` renders an analog dial
-  (MUI TimeClock / Android style): tap or drag to pick, double ring for 24h,
+- The time selector is a set of free-scrolling digital-clock columns with
+  click-to-select and keyboard support (`ArrowUp`/`ArrowDown`/`Home`/`End`).
+  Alternatively, `time-view="clock"` renders an analog dial in the Material
+  Design (Android) time-picker style: tap or drag to pick, double ring for 24h,
   digital readout to switch between hour/minute/second views, `role="slider"`
   keyboard support, and automatic view advancement.
 - **Calendar keyboard navigation**: `ArrowDown` in the field moves focus into the
@@ -176,9 +199,9 @@ This project stands on the shoulders of:
   — the API model (`LocalDateTime` value, ISO string element property, min/max,
   i18n object). DateTimeComboPicker exists because DateTimePicker uses two separate
   fields and overlays where one combined popup was wanted.
-- [MUI X DateTimePicker](https://mui.com/x/react-date-pickers/date-time-picker/)
-  — the popup layout: calendar on the left, sliding hour/minute/second columns on
-  the right.
+- [Material Design date & time pickers](https://m3.material.io/components/time-pickers/overview)
+  — the popup layout (calendar beside sliding hour/minute/second columns) and the
+  analog clock dial with automatic view advancement.
 - [MiniCalendar add-on](https://vaadin.com/directory/component/minicalendar-add-on-for-vaadin)
   — evaluated as the calendar building block; not used because it is a server-side
   Java component and this add-on needed a client-side calendar inside a single

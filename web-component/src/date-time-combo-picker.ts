@@ -43,13 +43,13 @@ const FULLSCREEN_MEDIA_QUERY = '(max-width: 450px), (max-height: 450px)';
 
 /**
  * `<date-time-combo-picker>` is a web component for selecting both a date and
- * a time in a single field with a single popup: a month calendar and sliding
- * time columns side by side.
+ * a time in a single field with a single popup: a month calendar and a time
+ * selector side by side.
  *
  * The `format` pattern (e.g. `dd.MM.yyyy HH:mm:ss` or `M/d/yyyy h:mm a`)
  * defines how the value is displayed and parsed in the field, and which time
- * columns are visible: no `ss` - no seconds column, no `mm` - no minutes
- * column, `h`/`hh` - 12-hour clock with an AM/PM column.
+ * parts are offered: no `ss` - no seconds, no `mm` - no minutes,
+ * `h`/`hh` - 12-hour clock with an AM/PM selector.
  *
  * The `value` property is an ISO-8601 local date-time string
  * (`yyyy-MM-ddTHH:mm:ss`), or an empty string when nothing is selected.
@@ -61,6 +61,27 @@ const FULLSCREEN_MEDIA_QUERY = '(max-width: 450px), (max-height: 450px)';
  *   value="2026-07-30T13:30:00"
  * ></date-time-combo-picker>
  * ```
+ *
+ * ### Properties and attributes
+ *
+ * Property (attribute) | Description | Default
+ * ---|---|---
+ * `value` (`value`) | ISO-8601 local date-time string, `''` when empty | `''`
+ * `format` (`format`) | Date-time pattern driving display, parsing and the popup UI | `dd.MM.yyyy HH:mm`
+ * `min` / `max` (`min`/`max`) | Earliest / latest allowed value (ISO string) | `null`
+ * `timeView` (`time-view`) | Time selector: `columns` or `clock` (analog dial) | `columns`
+ * `hourStep` / `minuteStep` / `secondStep` | Interval between selectable time values | `1`
+ * `isDateDisabled` | `({day, month, year}) => boolean` (0-based month) disabling dates | -
+ * `initialPosition` (`initial-position`) | ISO date(-time) shown and used as defaults when empty | -
+ * `autoApply` (`auto-apply`) | `false` stages selections behind an OK/Cancel action bar | `true`
+ * `opened` (`opened`) | Whether the popup is open | `false`
+ * `autoOpenDisabled` (`auto-open-disabled`) | Only open the popup from the toggle button | `false`
+ * `showWeekNumbers` (`show-week-numbers`) | ISO week numbers (requires `firstDayOfWeek: 1`) | `false`
+ * `i18n` | Localization object (month/weekday names, labels, `firstDayOfWeek`) | English
+ * `label`, `placeholder`, `helperText`, `errorMessage`, `required`, `disabled`, `readonly`, `clearButtonVisible`, `invalid` | Standard Vaadin field properties | -
+ *
+ * On viewports narrower than 450px the popup becomes a fullscreen
+ * bottom sheet with a backdrop.
  *
  * @fires value-changed - Fired when the `value` property changes.
  * @fires opened-changed - Fired when the `opened` property changes.
@@ -217,8 +238,8 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
 
       /**
        * The time selector shown in the popup: `columns` (default, sliding
-       * MUI-style columns) or `clock` (an analog clock face with one view
-       * per time part).
+       * digital-clock columns) or `clock` (an analog clock face with one
+       * view per time part).
        */
       timeView: {
         type: String,
@@ -563,6 +584,17 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       requestAnimationFrame(() => {
         const content = this.$.overlayContent as DtcpOverlayContent;
         content.initialize();
+        // The overlay was positioned before the content had its final size:
+        // the position mixin only measures its own (viewport-clamped) box, so
+        // tell it the real space the content needs and re-evaluate, letting it
+        // flip above the field near the bottom of the viewport.
+        requestAnimationFrame(() => {
+          const overlay = this.$.overlay as any;
+          if (!this._fullscreen) {
+            overlay.requiredVerticalSpace = content.offsetHeight;
+            overlay._updatePosition();
+          }
+        });
       });
     } else if (oldOpened) {
       // Closing without OK discards any staged (not applied) selection

@@ -3,8 +3,8 @@
  * Copyright (c) 2026 DateTimeComboPicker contributors.
  * This program is available under Apache License Version 2.0.
  *
- * The sliding time columns are inspired by the MUI X DateTimePicker
- * (https://mui.com/x/react-date-pickers/date-time-picker/).
+ * Sliding time columns in the style of a digital clock: one vertically
+ * scrollable column per time part, click to select.
  */
 import { css, html, LitElement, nothing } from 'lit';
 import { defineCustomElement } from '@vaadin/component-base/src/define.js';
@@ -52,8 +52,9 @@ const DEFAULT_CONFIG: TimeConfig = {
 
 /**
  * `<dtcp-time-columns>` renders up to four vertically scrollable columns
- * (hours, minutes, seconds, AM/PM) in the style of the MUI digital clock.
+ * (hours, minutes, seconds, AM/PM) in the style of a digital clock.
  * Clicking (or keyboard-navigating to) an item selects it.
+ * An internal element, not intended to be used separately.
  *
  * @fires time-changed - Fired when the user selects a time part. `detail` is a {@link TimeValue}.
  */

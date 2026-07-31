@@ -8,76 +8,153 @@
       body {
         font-family: var(--lumo-font-family, sans-serif);
         margin: 2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-        max-width: 420px;
+        max-width: 900px;
+      }
+      main {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 1.5rem 2rem;
+        align-items: start;
+      }
+      h2 {
+        grid-column: 1 / -1;
+        font-size: 1.1rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.25rem;
+        margin: 1rem 0 0;
       }
       output {
+        display: block;
         font-family: monospace;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         color: gray;
+        margin-top: 0.25rem;
+        min-height: 1.2em;
       }
     </style>
   </head>
   <body>
-    <div>
-      <date-time-combo-picker
-        id="p1"
-        label="Default (dd.MM.yyyy HH:mm)"
-        clear-button-visible
-      ></date-time-combo-picker>
-      <output id="o1"></output>
-    </div>
+    <main>
+      <h2>Format-driven fields</h2>
+      <div>
+        <date-time-combo-picker label="Default (dd.MM.yyyy HH:mm)" clear-button-visible></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker
+          label="With seconds (dd.MM.yyyy HH:mm:ss)"
+          format="dd.MM.yyyy HH:mm:ss"
+          value="2026-07-30T13:37:42"
+        ></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker label="12h (M/d/yyyy h:mm a)" format="M/d/yyyy h:mm a"></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker label="Hours only (dd.MM.yyyy HH)" format="dd.MM.yyyy HH"></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker label="Date only (dd.MM.yyyy)" format="dd.MM.yyyy"></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker label="Time only (HH:mm:ss)" format="HH:mm:ss"></date-time-combo-picker>
+      </div>
 
-    <div>
-      <date-time-combo-picker
-        id="p2"
-        label="With seconds (dd.MM.yyyy HH:mm:ss)"
-        format="dd.MM.yyyy HH:mm:ss"
-        value="2026-07-30T13:37:42"
-      ></date-time-combo-picker>
-      <output id="o2"></output>
-    </div>
+      <h2>Analog clock (time-view="clock")</h2>
+      <div>
+        <date-time-combo-picker label="24h clock" time-view="clock"></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker
+          label="12h clock with seconds"
+          time-view="clock"
+          format="M/d/yyyy h:mm:ss a"
+        ></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker
+          label="Clock with 5-minute steps"
+          time-view="clock"
+          minute-step="5"
+        ></date-time-combo-picker>
+      </div>
 
-    <div>
-      <date-time-combo-picker
-        id="p3"
-        label="US 12h (M/d/yyyy h:mm a)"
-        format="M/d/yyyy h:mm a"
-      ></date-time-combo-picker>
-      <output id="o3"></output>
-    </div>
-
-    <div>
-      <date-time-combo-picker
-        id="p4"
-        label="Hours only (dd.MM.yyyy HH)"
-        format="dd.MM.yyyy HH"
-      ></date-time-combo-picker>
-      <output id="o4"></output>
-    </div>
-
-    <div>
-      <date-time-combo-picker id="p5" label="Date only (dd.MM.yyyy)" format="dd.MM.yyyy"></date-time-combo-picker>
-      <output id="o5"></output>
-    </div>
-
-    <div>
-      <date-time-combo-picker id="p6" label="Time only (HH:mm:ss)" format="HH:mm:ss"></date-time-combo-picker>
-      <output id="o6"></output>
-    </div>
+      <h2>Options</h2>
+      <div>
+        <date-time-combo-picker
+          label="Time steps (h:6, m:15, s:30)"
+          format="dd.MM.yyyy HH:mm:ss"
+          hour-step="6"
+          minute-step="15"
+          second-step="30"
+        ></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker id="weekdaysOnly" label="Weekdays only (isDateDisabled)"></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker
+          label="Initial position 2030-01-15 12:30"
+          initial-position="2030-01-15T12:30:00"
+        ></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker
+          id="staged"
+          label="OK/Cancel action bar"
+        ></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker label="Min/max (year 2026)" min="2026-01-01T00:00" max="2026-12-31T23:59">
+        </date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker id="localized" label="Localized (fi), week numbers" show-week-numbers>
+        </date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker label="No auto-open (toggle only)" auto-open-disabled></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker label="Required" required></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker label="Disabled" disabled value="2026-07-30T13:37:00"></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker label="Read-only" readonly value="2026-07-30T13:37:00"></date-time-combo-picker>
+      </div>
+    </main>
 
     <script type="module">
       import './src/date-time-combo-picker-lumo.ts';
 
-      for (let i = 1; i <= 6; i++) {
-        const picker = document.getElementById(`p${i}`);
-        const out = document.getElementById(`o${i}`);
+      // Properties that cannot be expressed as attributes
+      document.getElementById('weekdaysOnly').isDateDisabled = (d) =>
+        [0, 6].includes(new Date(d.year, d.month, d.day).getDay());
+
+      document.getElementById('staged').autoApply = false;
+
+      document.getElementById('localized').i18n = {
+        monthNames: ['tammikuu', 'helmikuu', 'maaliskuu', 'huhtikuu', 'toukokuu', 'kesäkuu',
+          'heinäkuu', 'elokuu', 'syyskuu', 'lokakuu', 'marraskuu', 'joulukuu'],
+        weekdays: ['sunnuntai', 'maanantai', 'tiistai', 'keskiviikko', 'torstai', 'perjantai', 'lauantai'],
+        weekdaysShort: ['su', 'ma', 'ti', 'ke', 'to', 'pe', 'la'],
+        firstDayOfWeek: 1,
+        today: 'Tänään',
+        year: 'Vuosi',
+        ok: 'OK',
+        cancel: 'Peruuta',
+      };
+
+      // A live value read-out under every picker
+      document.querySelectorAll('date-time-combo-picker').forEach((picker) => {
+        const out = document.createElement('output');
+        out.textContent = `value: ${JSON.stringify(picker.value || null)}`;
+        picker.parentElement.append(out);
         picker.addEventListener('value-changed', (e) => {
           out.textContent = `value: ${JSON.stringify(e.detail.value)}`;
         });
-      }
+      });
     </script>
   </body>
 </html>

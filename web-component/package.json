@@ -1,7 +1,7 @@
 {
   "name": "date-time-combo-picker",
   "version": "1.0.0",
-  "description": "A combined date & time picker web component: a single field with one popup containing a calendar and MUI-style scrollable time columns. The date-time format pattern drives which time parts are shown.",
+  "description": "A combined date & time picker web component: a single field with one popup containing a calendar. The date-time format pattern drives which time parts are shown.",
   "license": "Apache-2.0",
   "author": "DateTimeComboPicker contributors",
   "keywords": [

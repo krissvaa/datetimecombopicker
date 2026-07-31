@@ -48,10 +48,12 @@ registerStyles(
     menuOverlay,
     css`
       [part='overlay'] {
-        /* Size the popup by its content instead of stretching to the viewport */
+        /* Size the popup by its content instead of stretching to the viewport;
+           scroll when the viewport clamps it (field mid-screen in a short window) */
         flex: none;
         height: auto;
-        overflow: hidden;
+        max-height: 100%;
+        overflow: auto;
         -webkit-tap-highlight-color: transparent;
       }
 

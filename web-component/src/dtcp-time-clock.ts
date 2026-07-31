@@ -3,10 +3,9 @@
  * Copyright (c) 2026 DateTimeComboPicker contributors.
  * This program is available under Apache License Version 2.0.
  *
- * An analog clock time selector inspired by the MUI X TimeClock
- * (https://mui.com/x/react-date-pickers/time-clock/) and the Android
- * time picker: numbers on a dial, a hand pointing at the selection,
- * one view per time part with automatic advancement.
+ * An analog clock time selector in the style of the Material Design
+ * (Android) time picker: numbers on a dial, a hand pointing at the
+ * selection, one view per time part with automatic advancement.
  */
 import { css, html, LitElement, nothing } from 'lit';
 import { classMap } from 'lit/directives/class-map.js';

@@ -38,8 +38,9 @@ import elemental.json.JsonObject;
 
 /**
  * A combined date and time picker: a single field with a {@link LocalDateTime}
- * value whose popup shows a month calendar and sliding time columns side by
- * side (inspired by the MUI X DateTimePicker).
+ * value whose popup shows a month calendar and a time selector side by side
+ * (sliding columns by default, or an analog clock via
+ * {@link #setTimeView(TimeView)}).
  *
  * <p>
  * The {@linkplain #setFormat(String) format pattern} defines both how the

@@ -3,8 +3,8 @@
  * Copyright (c) 2026 DateTimeComboPicker contributors.
  * This program is available under Apache License Version 2.0.
  *
- * Layout inspired by the MUI X DateTimePicker desktop view
- * (calendar on the left, time columns on the right). Keyboard navigation
+ * Combined popup layout: calendar on the left, time selector on the
+ * right (stacked vertically in fullscreen mode). Keyboard navigation
  * modeled on vaadin-date-picker.
  */
 import { css, html, LitElement, nothing } from 'lit';
@@ -203,8 +203,9 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       :host {
         display: flex;
         flex-direction: column;
-        overflow: hidden;
-        height: 100%;
+        /* Natural height: the popup sizes to the content and scrolls when
+           the viewport clamps the overlay */
+        height: auto;
         box-sizing: border-box;
       }
 

@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -37,74 +38,77 @@ public class DemoView extends VerticalLayout {
         setSpacing(true);
         setPadding(true);
 
-        add(new H2("DateTimeComboPicker demo"));
+        add(new H1("DateTimeComboPicker demo"));
 
-        // Default format
+        // ------------------------------------------------ Format-driven UI
+        add(new H2("Format-driven fields"));
+
         DateTimeComboPicker basic = new DateTimeComboPicker(
                 "Default (dd.MM.yyyy HH:mm)");
         basic.setClearButtonVisible(true);
         addWithValueOutput(basic);
 
-        // Seconds column via format
         DateTimeComboPicker seconds = new DateTimeComboPicker(
                 "With seconds (dd.MM.yyyy HH:mm:ss)");
         seconds.setFormat("dd.MM.yyyy HH:mm:ss");
         seconds.setValue(LocalDateTime.of(2026, 7, 30, 13, 37, 42));
         addWithValueOutput(seconds);
 
-        // 12-hour clock with AM/PM column
         DateTimeComboPicker twelveHour = new DateTimeComboPicker(
                 "US 12h (M/d/yyyy h:mm a)");
         twelveHour.setFormat("M/d/yyyy h:mm a");
         addWithValueOutput(twelveHour);
 
-        // Hours only
         DateTimeComboPicker hoursOnly = new DateTimeComboPicker(
                 "Hours only (dd.MM.yyyy HH)");
         hoursOnly.setFormat("dd.MM.yyyy HH");
         addWithValueOutput(hoursOnly);
 
-        // Time steps
+        // ------------------------------------------------------ Time views
+        add(new H2("Analog clock (TimeView.CLOCK)"));
+
+        DateTimeComboPicker clock = new DateTimeComboPicker(
+                "Analog clock, 24h");
+        clock.setTimeView(TimeView.CLOCK);
+        addWithValueOutput(clock);
+
+        DateTimeComboPicker clock12 = new DateTimeComboPicker(
+                "Analog clock, 12h with seconds (h:mm:ss a)");
+        clock12.setTimeView(TimeView.CLOCK);
+        clock12.setFormat("M/d/yyyy h:mm:ss a");
+        addWithValueOutput(clock12);
+
+        DateTimeComboPicker clockStepped = new DateTimeComboPicker(
+                "Analog clock, 5-minute steps");
+        clockStepped.setTimeView(TimeView.CLOCK);
+        clockStepped.setMinuteStep(5);
+        addWithValueOutput(clockStepped);
+
+        // --------------------------------------------------------- Options
+        add(new H2("Options"));
+
         DateTimeComboPicker stepped = new DateTimeComboPicker(
-                "5-minute steps (dd.MM.yyyy HH:mm)");
+                "5-minute steps (columns)");
         stepped.setMinuteStep(5);
         addWithValueOutput(stepped);
 
-        // Disabled dates (weekends)
         DateTimeComboPicker weekdaysOnly = new DateTimeComboPicker(
-                "Weekdays only");
+                "Weekdays only (setDateDisabledFunction)");
         weekdaysOnly.setDateDisabledFunction(
                 "(d) => [0, 6].includes(new Date(d.year, d.month, d.day).getDay())");
         weekdaysOnly.setErrorMessage("Weekends are not allowed");
         addWithValueOutput(weekdaysOnly);
 
-        // Action bar (staged selection)
         DateTimeComboPicker staged = new DateTimeComboPicker(
-                "With OK/Cancel (autoApply=false)");
+                "With OK/Cancel (setAutoApply(false))");
         staged.setAutoApply(false);
         addWithValueOutput(staged);
 
-        // Initial position
         DateTimeComboPicker positioned = new DateTimeComboPicker(
                 "Initial position 2030-01-15 12:30");
         positioned.setInitialPosition(LocalDateTime.of(2030, 1, 15, 12, 30));
         addWithValueOutput(positioned);
 
-        // Analog clock time selector
-        DateTimeComboPicker clock = new DateTimeComboPicker(
-                "Analog clock (timeView=CLOCK)");
-        clock.setTimeView(TimeView.CLOCK);
-        addWithValueOutput(clock);
-
-        // Min/max
-        DateTimeComboPicker minMax = new DateTimeComboPicker(
-                "Min/max (this year only)");
-        minMax.setMin(LocalDateTime.of(2026, 1, 1, 0, 0));
-        minMax.setMax(LocalDateTime.of(2026, 12, 31, 23, 59));
-        minMax.setErrorMessage("Value must be in 2026");
-        addWithValueOutput(minMax);
-
-        // Localized (Finnish), Monday first, week numbers
         DateTimeComboPicker localized = new DateTimeComboPicker(
                 "Localized (fi), week numbers");
         localized.setShowWeekNumbers(true);
@@ -116,11 +120,20 @@ public class DemoView extends VerticalLayout {
                         "keskiviikko", "torstai", "perjantai", "lauantai"))
                 .setWeekdaysShort(
                         List.of("su", "ma", "ti", "ke", "to", "pe", "la"))
-                .setFirstDayOfWeek(1).setToday("Tänään"));
+                .setFirstDayOfWeek(1).setToday("Tänään").setYear("Vuosi")
+                .setCancel("Peruuta"));
         addWithValueOutput(localized);
 
-        // Binder with validation
-        add(new H2("Binder"));
+        // -------------------------------------------- Validation and Binder
+        add(new H2("Validation and Binder"));
+
+        DateTimeComboPicker minMax = new DateTimeComboPicker(
+                "Min/max (this year only)");
+        minMax.setMin(LocalDateTime.of(2026, 1, 1, 0, 0));
+        minMax.setMax(LocalDateTime.of(2026, 12, 31, 23, 59));
+        minMax.setErrorMessage("Value must be in 2026");
+        addWithValueOutput(minMax);
+
         DateTimeComboPicker bound = new DateTimeComboPicker("Appointment");
         bound.setRequiredIndicatorVisible(true);
         Binder<Appointment> binder = new Binder<>(Appointment.class);

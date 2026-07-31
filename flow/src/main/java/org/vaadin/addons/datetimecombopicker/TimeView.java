@@ -22,14 +22,14 @@ public enum TimeView {
 
     /**
      * Sliding scrollable columns (hours / minutes / seconds / AM-PM), in the
-     * style of the MUI X digital clock. The default.
+     * style of a digital clock. The default.
      */
     COLUMNS("columns"),
 
     /**
      * An analog clock face with one dial per time part and a digital readout
-     * for switching between them, in the style of the MUI X TimeClock /
-     * Android time picker.
+     * for switching between them, in the style of the Material Design
+     * (Android) time picker.
      */
     CLOCK("clock");
 

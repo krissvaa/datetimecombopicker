@@ -414,6 +414,28 @@ public class DateTimeComboPicker
     }
 
     /**
+     * Sets whether the analog clock automatically advances to the next view
+     * (hours to minutes to seconds) after a selection. Enabled by default.
+     * When disabled, the user switches views from the digital readout above
+     * the dial. Only applies when the time view is {@link TimeView#CLOCK}.
+     *
+     * @param autoAdvance
+     *            {@code true} to advance automatically
+     */
+    public void setAutoAdvance(boolean autoAdvance) {
+        getElement().setProperty("autoAdvanceDisabled", !autoAdvance);
+    }
+
+    /**
+     * Gets whether the analog clock advances to the next view automatically.
+     *
+     * @return {@code true} if auto-advance is enabled
+     */
+    public boolean isAutoAdvance() {
+        return !getElement().getProperty("autoAdvanceDisabled", false);
+    }
+
+    /**
      * Sets whether ISO-8601 week numbers are shown in the calendar. Only
      * supported when the first day of the week is Monday
      * ({@code i18n.firstDayOfWeek} = 1).

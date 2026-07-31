@@ -58,6 +58,7 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
   declare fallbackValue: TimeValue;
   declare steps: TimeSteps;
   declare i18n: TimeColumnsI18n;
+  declare autoAdvanceDisabled: boolean;
   declare _activeView: ClockView;
   declare _dragValue: number | null;
 
@@ -92,6 +93,15 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
       /** Accessible names for the views and AM/PM labels. */
       i18n: {
         type: Object,
+      },
+
+      /**
+       * When true, selecting a value does not automatically advance to the
+       * next view (hours to minutes to seconds); the user switches views
+       * from the readout instead.
+       */
+      autoAdvanceDisabled: {
+        type: Boolean,
       },
 
       /** @protected */
@@ -206,6 +216,7 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
     this.value = null;
     this.fallbackValue = { hours: 0, minutes: 0, seconds: 0 };
     this.steps = { hours: 1, minutes: 1, seconds: 1 };
+    this.autoAdvanceDisabled = false;
     this._activeView = 'hours';
     this._dragValue = null;
     this.i18n = {
@@ -503,7 +514,7 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
     this.value = next;
     this.dispatchEvent(new CustomEvent('time-changed', { detail: next }));
 
-    if (advance) {
+    if (advance && !this.autoAdvanceDisabled) {
       const views = this.__views();
       const nextView = views[views.indexOf(this._activeView) + 1];
       if (nextView) {

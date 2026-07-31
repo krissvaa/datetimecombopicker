@@ -84,6 +84,12 @@ public class DemoView extends VerticalLayout {
         clockStepped.setMinuteStep(5);
         addWithValueOutput(clockStepped);
 
+        DateTimeComboPicker clockManual = new DateTimeComboPicker(
+                "Analog clock, no auto-advance");
+        clockManual.setTimeView(TimeView.CLOCK);
+        clockManual.setAutoAdvance(false);
+        addWithValueOutput(clockManual);
+
         // --------------------------------------------------------- Options
         add(new H2("Options"));
 

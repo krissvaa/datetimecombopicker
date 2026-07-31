@@ -208,6 +208,16 @@ class DateTimeComboPickerTest {
     }
 
     @Test
+    void autoAdvance_mapsToInvertedProperty() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        assertTrue(picker.isAutoAdvance());
+        picker.setAutoAdvance(false);
+        assertFalse(picker.isAutoAdvance());
+        assertTrue(picker.getElement().getProperty("autoAdvanceDisabled",
+                false));
+    }
+
+    @Test
     void valueChangeListener_firesOnServerSideChange() {
         DateTimeComboPicker picker = new DateTimeComboPicker();
         LocalDateTime[] observed = new LocalDateTime[1];

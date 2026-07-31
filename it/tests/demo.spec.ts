@@ -26,7 +26,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('demo page shows all pickers', async ({ page }) => {
-  await expect(page.locator('date-time-combo-picker')).toHaveCount(14);
+  await expect(page.locator('date-time-combo-picker')).toHaveCount(15);
 });
 
 test('mouse: pick a date and a time in one popup', async ({ page }) => {

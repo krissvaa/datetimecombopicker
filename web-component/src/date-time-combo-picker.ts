@@ -70,6 +70,7 @@ const FULLSCREEN_MEDIA_QUERY = '(max-width: 450px), (max-height: 450px)';
  * `format` (`format`) | Date-time pattern driving display, parsing and the popup UI | `dd.MM.yyyy HH:mm`
  * `min` / `max` (`min`/`max`) | Earliest / latest allowed value (ISO string) | `null`
  * `timeView` (`time-view`) | Time selector: `columns` or `clock` (analog dial) | `columns`
+ * `autoAdvanceDisabled` (`auto-advance-disabled`) | Clock only: don't auto-advance to the next view after selecting | `false`
  * `hourStep` / `minuteStep` / `secondStep` | Interval between selectable time values | `1`
  * `isDateDisabled` | `({day, month, year}) => boolean` (0-based month) disabling dates | -
  * `initialPosition` (`initial-position`) | ISO date(-time) shown and used as defaults when empty | -
@@ -104,6 +105,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   declare initialPosition: string | null;
   declare autoApply: boolean;
   declare timeView: TimeViewKind;
+  declare autoAdvanceDisabled: boolean;
   declare _fullscreen: boolean;
   declare _stagedParts: DateTimeParts | null;
   declare _timeConfig: TimeConfig;
@@ -247,6 +249,18 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
         sync: true,
       },
 
+      /**
+       * When true, selecting a value on the analog clock does not
+       * automatically advance to the next view (hours to minutes to
+       * seconds); the user switches views from the readout instead.
+       * Only applies when `timeView` is `clock`.
+       */
+      autoAdvanceDisabled: {
+        type: Boolean,
+        value: false,
+        sync: true,
+      },
+
       /** @protected */
       _fullscreen: {
         type: Boolean,
@@ -347,6 +361,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
           .referenceTime="${this.__referenceTime()}"
           .showActions="${!this.autoApply}"
           .timeView="${this.timeView}"
+          .autoAdvanceDisabled="${this.autoAdvanceDisabled}"
           .initialPosition="${this.__initialPositionDate()}"
           .showWeekNumbers="${this.showWeekNumbers}"
           @date-selected="${this.__onDateSelected}"

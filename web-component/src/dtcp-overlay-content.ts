@@ -110,6 +110,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
   declare referenceTime: TimeValue | null;
   declare showActions: boolean;
   declare timeView: TimeViewKind;
+  declare autoAdvanceDisabled: boolean;
   declare _displayedMonth: Date;
   declare _yearViewOpen: boolean;
 
@@ -184,6 +185,11 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       /** The time selector to render: scroll columns or an analog clock. */
       timeView: {
         type: String,
+      },
+
+      /** When true, the analog clock does not auto-advance to the next view. */
+      autoAdvanceDisabled: {
+        type: Boolean,
       },
 
       /** @protected */
@@ -335,6 +341,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     this.referenceTime = null;
     this.showActions = false;
     this.timeView = 'columns';
+    this.autoAdvanceDisabled = false;
     this.timeConfig = {
       hasDate: true,
       hasTime: true,
@@ -430,6 +437,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
                 .value="${this.timeValue}"
                 .steps="${this.steps}"
                 .fallbackValue="${this.referenceTime ?? { hours: 0, minutes: 0, seconds: 0 }}"
+                .autoAdvanceDisabled="${this.autoAdvanceDisabled}"
                 .i18n="${this.__timeI18n()}"
                 @time-changed="${this.__onTimeChanged}"
               ></dtcp-time-clock>

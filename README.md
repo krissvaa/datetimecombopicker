@@ -121,6 +121,7 @@ Examples: `dd.MM.yyyy HH:mm` (default), `dd.MM.yyyy HH:mm:ss`, `M/d/yyyy h:mm a`
 | `setFormat(String)` | `format` | Pattern driving display, parsing and which time parts are shown |
 | `setMin(LocalDateTime)` / `setMax(...)` | `min` / `max` | Allowed range; out-of-range values are invalid |
 | `setTimeView(TimeView)` | `time-view` | `COLUMNS` (default) or `CLOCK` (analog dial) |
+| `setAutoAdvance(boolean)` | `auto-advance-disabled` (inverted) | Clock only: advance to the next view after selecting (default on) |
 | `setHourStep(int)` / `setMinuteStep(int)` / `setSecondStep(int)` | `hour-step` / `minute-step` / `second-step` | Interval between selectable time values |
 | `setDateDisabledFunction(String)` | `isDateDisabled` (function property) | Disables individual dates; disabled dates fail validation |
 | `setInitialPosition(LocalDateTime)` | `initial-position` | Popup position and date/time defaults while the field is empty |

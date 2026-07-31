@@ -91,6 +91,20 @@ describe('dtcp-time-clock', () => {
     expect((clock(picker) as any)._activeView).to.equal('minutes');
   });
 
+  it('stays on the hours view when auto-advance is disabled', async () => {
+    const picker = await openedPicker(
+      html`<date-time-combo-picker time-view="clock" auto-advance-disabled></date-time-combo-picker>`,
+    );
+    picker.value = '2026-07-15T00:00:00';
+    await nextFrame();
+    tapFace(picker, 90);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 400);
+    });
+    expect((clock(picker) as any)._activeView).to.equal('hours');
+    expect(picker.value).to.equal('2026-07-15T03:00:00'); // selection still applied
+  });
+
   it('selects minutes on the minutes view', async () => {
     const picker = await openedPicker();
     picker.value = '2026-07-15T03:00:00';

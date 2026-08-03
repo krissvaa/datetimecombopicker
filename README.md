@@ -66,8 +66,17 @@ I18n example:
 picker.setI18n(new DateTimeComboPickerI18n()
         .setMonthNames(List.of("tammikuu", "helmikuu", /* ... */ "joulukuu"))
         .setFirstDayOfWeek(1)
-        .setToday("Tänään"));
+        .setToday("Tänään")
+        .setAm("ap.").setPm("ip.")             // used in the popup AND the field text/parsing
+        .setMinErrorMessage("Liian aikainen")  // per-constraint error messages; fall back
+        .setBadInputErrorMessage("Tarkista muoto")); // to setErrorMessage(...) when unset
 ```
+
+Validation runs client-side on commit and again **server-side on every value
+change** (min/max; disabled-date functions are client-only). `Binder` takes over
+via `setManualValidation(true)` as usual. Per-constraint messages
+(`badInput`/`required`/`min`/`max`/`dateDisabled`) override the generic error
+message when configured.
 
 ## Web component usage
 

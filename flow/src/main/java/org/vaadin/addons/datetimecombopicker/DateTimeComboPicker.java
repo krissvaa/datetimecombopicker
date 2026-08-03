@@ -75,6 +75,7 @@ public class DateTimeComboPicker
     public static final String DEFAULT_FORMAT = "dd.MM.yyyy HH:mm";
 
     private DateTimeComboPickerI18n i18n;
+    private boolean manualValidation;
 
     /**
      * Creates a new picker with no value and the default format
@@ -84,6 +85,7 @@ public class DateTimeComboPicker
         super("value", null, String.class,
                 DateTimeComboPicker::parsePresentationValue,
                 DateTimeComboPicker::formatPresentationValue);
+        addValueChangeListener(event -> validate());
     }
 
     /**
@@ -144,7 +146,9 @@ public class DateTimeComboPicker
     }
 
     /**
-     * Sets the earliest allowed date-time.
+     * Sets the earliest allowed date-time. Values before it make the field
+     * invalid, both client-side and in the server-side validation that runs
+     * on every value change.
      *
      * @param min
      *            the minimum value, or {@code null} for no limit
@@ -152,6 +156,7 @@ public class DateTimeComboPicker
     public void setMin(LocalDateTime min) {
         getElement().setProperty("min",
                 min == null ? "" : formatPresentationValue(min));
+        validate();
     }
 
     /**
@@ -164,7 +169,9 @@ public class DateTimeComboPicker
     }
 
     /**
-     * Sets the latest allowed date-time.
+     * Sets the latest allowed date-time. Values after it make the field
+     * invalid, both client-side and in the server-side validation that runs
+     * on every value change.
      *
      * @param max
      *            the maximum value, or {@code null} for no limit
@@ -172,6 +179,7 @@ public class DateTimeComboPicker
     public void setMax(LocalDateTime max) {
         getElement().setProperty("max",
                 max == null ? "" : formatPresentationValue(max));
+        validate();
     }
 
     /**
@@ -477,6 +485,57 @@ public class DateTimeComboPicker
         return getElement().getProperty("invalid", false);
     }
 
+    @Override
+    public void setManualValidation(boolean enabled) {
+        this.manualValidation = enabled;
+    }
+
+    /**
+     * Validates the current value against min/max on the server. Runs
+     * automatically on every value change and when min/max change; does
+     * nothing when manual validation is enabled (e.g. by {@code Binder}).
+     *
+     * <p>
+     * Note that a date-disabled function set with
+     * {@link #setDateDisabledFunction(String)} is evaluated only in the
+     * browser and is not part of this server-side validation.
+     */
+    protected void validate() {
+        if (manualValidation) {
+            return;
+        }
+        LocalDateTime value = getValue();
+        if (value == null) {
+            // Required/bad-input handling is owned by the client-side
+            // validation; the server cannot distinguish "cleared" from
+            // "unparseable text" here.
+            return;
+        }
+        LocalDateTime min = getMin();
+        LocalDateTime max = getMax();
+        if (min != null && value.isBefore(min)) {
+            setInvalid(true);
+            applyI18nErrorMessage(
+                    i18n == null ? null : i18n.getMinErrorMessage());
+        } else if (max != null && value.isAfter(max)) {
+            setInvalid(true);
+            applyI18nErrorMessage(
+                    i18n == null ? null : i18n.getMaxErrorMessage());
+        } else {
+            setInvalid(false);
+            // Client-only constraints (e.g. a date-disabled function) cannot
+            // be evaluated here; let the client re-validate so its verdict is
+            // not lost.
+            getElement().executeJs("this.validate && this.validate();");
+        }
+    }
+
+    private void applyI18nErrorMessage(String message) {
+        if (message != null && !message.isEmpty()) {
+            setErrorMessage(message);
+        }
+    }
+
     /**
      * Sets the internationalization settings.
      *
@@ -519,6 +578,14 @@ public class DateTimeComboPicker
         putString(json, "meridiem", i18n.getMeridiem());
         putString(json, "am", i18n.getAm());
         putString(json, "pm", i18n.getPm());
+        putString(json, "badInputErrorMessage",
+                i18n.getBadInputErrorMessage());
+        putString(json, "requiredErrorMessage",
+                i18n.getRequiredErrorMessage());
+        putString(json, "minErrorMessage", i18n.getMinErrorMessage());
+        putString(json, "maxErrorMessage", i18n.getMaxErrorMessage());
+        putString(json, "dateDisabledErrorMessage",
+                i18n.getDateDisabledErrorMessage());
         return json;
     }
 

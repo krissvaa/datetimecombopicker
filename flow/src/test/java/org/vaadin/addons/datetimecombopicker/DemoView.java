@@ -116,7 +116,8 @@ public class DemoView extends VerticalLayout {
         addWithValueOutput(positioned);
 
         DateTimeComboPicker localized = new DateTimeComboPicker(
-                "Localized (fi), week numbers");
+                "Localized (fi), week numbers, 12h with localized AM/PM");
+        localized.setFormat("d.M.yyyy h.mm a");
         localized.setShowWeekNumbers(true);
         localized.setI18n(new DateTimeComboPickerI18n()
                 .setMonthNames(List.of("tammikuu", "helmikuu", "maaliskuu",
@@ -127,7 +128,7 @@ public class DemoView extends VerticalLayout {
                 .setWeekdaysShort(
                         List.of("su", "ma", "ti", "ke", "to", "pe", "la"))
                 .setFirstDayOfWeek(1).setToday("Tänään").setYear("Vuosi")
-                .setCancel("Peruuta"));
+                .setCancel("Peruuta").setAm("ap.").setPm("ip."));
         addWithValueOutput(localized);
 
         // -------------------------------------------- Validation and Binder
@@ -138,6 +139,12 @@ public class DemoView extends VerticalLayout {
         minMax.setMin(LocalDateTime.of(2026, 1, 1, 0, 0));
         minMax.setMax(LocalDateTime.of(2026, 12, 31, 23, 59));
         minMax.setErrorMessage("Value must be in 2026");
+        // Per-constraint messages override the generic one
+        minMax.setI18n(new DateTimeComboPickerI18n()
+                .setMinErrorMessage("Too early — must be in 2026")
+                .setMaxErrorMessage("Too late — must be in 2026")
+                .setBadInputErrorMessage(
+                        "Doesn't match the format dd.MM.yyyy HH:mm"));
         addWithValueOutput(minMax);
 
         DateTimeComboPicker bound = new DateTimeComboPicker("Appointment");

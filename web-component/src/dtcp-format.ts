@@ -88,7 +88,13 @@ const PATTERN_TOKENS: TokenType[] = [
   'a',
 ];
 
-const MERIDIEM_STRINGS = { am: 'AM', pm: 'PM' };
+/** Localizable AM/PM marker strings used by the `a` pattern token. */
+export interface MeridiemStrings {
+  am: string;
+  pm: string;
+}
+
+const DEFAULT_MERIDIEMS: MeridiemStrings = { am: 'AM', pm: 'PM' };
 
 /**
  * Tokenizes a format pattern string. Unknown pattern letters and other
@@ -147,8 +153,12 @@ function pad(value: number, length: number): string {
   return String(value).padStart(length, '0');
 }
 
-/** Formats date-time parts using the given tokens. */
-export function formatDateTime(tokens: Token[], parts: DateTimeParts): string {
+/** Formats date-time parts using the given tokens and AM/PM strings. */
+export function formatDateTime(
+  tokens: Token[],
+  parts: DateTimeParts,
+  meridiems: MeridiemStrings = DEFAULT_MERIDIEMS,
+): string {
   const hour12 = parts.hours % 12 === 0 ? 12 : parts.hours % 12;
   return tokens
     .map((token) => {
@@ -182,7 +192,7 @@ export function formatDateTime(tokens: Token[], parts: DateTimeParts): string {
         case 's':
           return String(parts.seconds);
         case 'a':
-          return parts.hours < 12 ? MERIDIEM_STRINGS.am : MERIDIEM_STRINGS.pm;
+          return parts.hours < 12 ? meridiems.am : meridiems.pm;
         case 'literal':
           return token.literal ?? '';
         default:
@@ -211,13 +221,56 @@ function readDigits(state: ParseState, minLen: number, maxLen: number): number |
 }
 
 /**
+ * Matches a localized AM/PM marker at the given position. Accepts the full
+ * marker string (case-insensitively) or, when the two markers start with
+ * different characters, their single-character abbreviation.
+ * Returns the matched meridiem and its consumed length, or null.
+ */
+function matchMeridiem(
+  text: string,
+  pos: number,
+  meridiems: MeridiemStrings,
+): { meridiem: 'am' | 'pm'; length: number } | null {
+  const rest = text.slice(pos).toLowerCase();
+  const am = meridiems.am.toLowerCase();
+  const pm = meridiems.pm.toLowerCase();
+
+  // Full markers, longest first so one being a prefix of the other works
+  const full: Array<{ meridiem: 'am' | 'pm'; marker: string }> = [
+    { meridiem: 'am' as const, marker: am },
+    { meridiem: 'pm' as const, marker: pm },
+  ].sort((a, b) => b.marker.length - a.marker.length);
+  for (const { meridiem, marker } of full) {
+    if (marker && rest.startsWith(marker)) {
+      return { meridiem, length: marker.length };
+    }
+  }
+
+  // Single-character abbreviations, only when unambiguous
+  if (am[0] !== pm[0]) {
+    if (rest.startsWith(am[0])) {
+      return { meridiem: 'am', length: 1 };
+    }
+    if (rest.startsWith(pm[0])) {
+      return { meridiem: 'pm', length: 1 };
+    }
+  }
+  return null;
+}
+
+/**
  * Parses text against the given tokens. Returns null when the text does not
  * match the pattern or contains out-of-range values. Parsing is strict about
  * literals but lenient about digit counts: 2-digit tokens accept 1-2 digits
  * (except when directly followed by another numeric token), and yyyy accepts
- * 1-4 digits. Two-digit years are windowed to 1950-2049.
+ * 1-4 digits. Two-digit years are windowed to 1950-2049. AM/PM markers are
+ * matched against the given localized strings.
  */
-export function parseDateTime(tokens: Token[], text: string): DateTimeParts | null {
+export function parseDateTime(
+  tokens: Token[],
+  text: string,
+  meridiems: MeridiemStrings = DEFAULT_MERIDIEMS,
+): DateTimeParts | null {
   const state: ParseState = { text: text.trim(), pos: 0 };
 
   // Defaults when the pattern omits parts
@@ -294,22 +347,12 @@ export function parseDateTime(tokens: Token[], text: string): DateTimeParts | nu
         break;
       }
       case 'a': {
-        const rest = state.text.slice(state.pos).toLowerCase();
-        if (rest.startsWith('am')) {
-          meridiem = 'am';
-          state.pos += 2;
-        } else if (rest.startsWith('pm')) {
-          meridiem = 'pm';
-          state.pos += 2;
-        } else if (rest.startsWith('a')) {
-          meridiem = 'am';
-          state.pos += 1;
-        } else if (rest.startsWith('p')) {
-          meridiem = 'pm';
-          state.pos += 1;
-        } else {
+        const match = matchMeridiem(state.text, state.pos, meridiems);
+        if (!match) {
           return null;
         }
+        meridiem = match.meridiem;
+        state.pos += match.length;
         break;
       }
       case 'literal': {

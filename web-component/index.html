@@ -141,7 +141,9 @@
 
       document.getElementById('staged').autoApply = false;
 
-      document.getElementById('localized').i18n = {
+      const localized = document.getElementById('localized');
+      localized.format = 'd.M.yyyy h.mm a';
+      localized.i18n = {
         monthNames: ['tammikuu', 'helmikuu', 'maaliskuu', 'huhtikuu', 'toukokuu', 'kesäkuu',
           'heinäkuu', 'elokuu', 'syyskuu', 'lokakuu', 'marraskuu', 'joulukuu'],
         weekdays: ['sunnuntai', 'maanantai', 'tiistai', 'keskiviikko', 'torstai', 'perjantai', 'lauantai'],
@@ -151,6 +153,10 @@
         year: 'Vuosi',
         ok: 'OK',
         cancel: 'Peruuta',
+        am: 'ap.',
+        pm: 'ip.',
+        minErrorMessage: 'Liian aikainen',
+        badInputErrorMessage: 'Tarkista muoto',
       };
 
       // A live value read-out under every picker

@@ -40,6 +40,11 @@ public class DateTimeComboPickerI18n implements Serializable {
     private String meridiem;
     private String am;
     private String pm;
+    private String badInputErrorMessage;
+    private String requiredErrorMessage;
+    private String minErrorMessage;
+    private String maxErrorMessage;
+    private String dateDisabledErrorMessage;
 
     /**
      * Gets the month names, January first.
@@ -378,6 +383,125 @@ public class DateTimeComboPickerI18n implements Serializable {
      */
     public DateTimeComboPickerI18n setPm(String pm) {
         this.pm = pm;
+        return this;
+    }
+
+    /**
+     * Gets the error message shown when the typed text does not match the
+     * format pattern.
+     *
+     * @return the message, or {@code null} to use the generic error message
+     */
+    public String getBadInputErrorMessage() {
+        return badInputErrorMessage;
+    }
+
+    /**
+     * Sets the error message shown when the typed text does not match the
+     * format pattern. When not set, the generic
+     * {@link DateTimeComboPicker#setErrorMessage(String) error message} is
+     * used.
+     *
+     * @param badInputErrorMessage
+     *            the message
+     * @return this instance for method chaining
+     */
+    public DateTimeComboPickerI18n setBadInputErrorMessage(
+            String badInputErrorMessage) {
+        this.badInputErrorMessage = badInputErrorMessage;
+        return this;
+    }
+
+    /**
+     * Gets the error message shown when a required field is left empty.
+     *
+     * @return the message, or {@code null} to use the generic error message
+     */
+    public String getRequiredErrorMessage() {
+        return requiredErrorMessage;
+    }
+
+    /**
+     * Sets the error message shown when a required field is left empty.
+     * When not set, the generic error message is used.
+     *
+     * @param requiredErrorMessage
+     *            the message
+     * @return this instance for method chaining
+     */
+    public DateTimeComboPickerI18n setRequiredErrorMessage(
+            String requiredErrorMessage) {
+        this.requiredErrorMessage = requiredErrorMessage;
+        return this;
+    }
+
+    /**
+     * Gets the error message shown when the value is earlier than the
+     * minimum.
+     *
+     * @return the message, or {@code null} to use the generic error message
+     */
+    public String getMinErrorMessage() {
+        return minErrorMessage;
+    }
+
+    /**
+     * Sets the error message shown when the value is earlier than the
+     * minimum. When not set, the generic error message is used.
+     *
+     * @param minErrorMessage
+     *            the message
+     * @return this instance for method chaining
+     */
+    public DateTimeComboPickerI18n setMinErrorMessage(String minErrorMessage) {
+        this.minErrorMessage = minErrorMessage;
+        return this;
+    }
+
+    /**
+     * Gets the error message shown when the value is later than the maximum.
+     *
+     * @return the message, or {@code null} to use the generic error message
+     */
+    public String getMaxErrorMessage() {
+        return maxErrorMessage;
+    }
+
+    /**
+     * Sets the error message shown when the value is later than the maximum.
+     * When not set, the generic error message is used.
+     *
+     * @param maxErrorMessage
+     *            the message
+     * @return this instance for method chaining
+     */
+    public DateTimeComboPickerI18n setMaxErrorMessage(String maxErrorMessage) {
+        this.maxErrorMessage = maxErrorMessage;
+        return this;
+    }
+
+    /**
+     * Gets the error message shown when the value's date is disabled via
+     * {@link DateTimeComboPicker#setDateDisabledFunction(String)}.
+     *
+     * @return the message, or {@code null} to use the generic error message
+     */
+    public String getDateDisabledErrorMessage() {
+        return dateDisabledErrorMessage;
+    }
+
+    /**
+     * Sets the error message shown when the value's date is disabled via
+     * {@link DateTimeComboPicker#setDateDisabledFunction(String)}. When not
+     * set, the generic error message is used.
+     *
+     * @param dateDisabledErrorMessage
+     *            the message
+     * @return this instance for method chaining
+     */
+    public DateTimeComboPickerI18n setDateDisabledErrorMessage(
+            String dateDisabledErrorMessage) {
+        this.dateDisabledErrorMessage = dateDisabledErrorMessage;
         return this;
     }
 }

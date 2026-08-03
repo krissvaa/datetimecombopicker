@@ -218,6 +218,83 @@ class DateTimeComboPickerTest {
     }
 
     @Test
+    void serverSideValidation_marksOutOfRangeValueInvalid() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        picker.setMin(LocalDateTime.of(2026, 1, 1, 0, 0));
+        picker.setMax(LocalDateTime.of(2026, 12, 31, 23, 59));
+
+        picker.setValue(LocalDateTime.of(2025, 6, 15, 10, 0));
+        assertTrue(picker.isInvalid());
+
+        picker.setValue(LocalDateTime.of(2026, 6, 15, 10, 0));
+        assertFalse(picker.isInvalid());
+
+        picker.setValue(LocalDateTime.of(2027, 6, 15, 10, 0));
+        assertTrue(picker.isInvalid());
+    }
+
+    @Test
+    void serverSideValidation_runsWhenMinMaxChange() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        picker.setValue(LocalDateTime.of(2026, 6, 15, 10, 0));
+        assertFalse(picker.isInvalid());
+
+        picker.setMin(LocalDateTime.of(2026, 7, 1, 0, 0));
+        assertTrue(picker.isInvalid());
+
+        picker.setMin(null);
+        assertFalse(picker.isInvalid());
+    }
+
+    @Test
+    void serverSideValidation_usesI18nErrorMessages() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        picker.setI18n(new DateTimeComboPickerI18n()
+                .setMinErrorMessage("Too early").setMaxErrorMessage("Too late"));
+        picker.setMin(LocalDateTime.of(2026, 1, 1, 0, 0));
+        picker.setMax(LocalDateTime.of(2026, 12, 31, 23, 59));
+
+        picker.setValue(LocalDateTime.of(2025, 6, 15, 10, 0));
+        assertEquals("Too early", picker.getErrorMessage());
+
+        picker.setValue(LocalDateTime.of(2027, 6, 15, 10, 0));
+        assertEquals("Too late", picker.getErrorMessage());
+    }
+
+    @Test
+    void serverSideValidation_skippedInManualMode() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        picker.setManualValidation(true);
+        picker.setMin(LocalDateTime.of(2026, 1, 1, 0, 0));
+        picker.setValue(LocalDateTime.of(2025, 6, 15, 10, 0));
+        assertFalse(picker.isInvalid());
+    }
+
+    @Test
+    void serverSideValidation_leavesNullValueAlone() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        picker.setMin(LocalDateTime.of(2026, 1, 1, 0, 0));
+        // Simulate the client marking bad input invalid
+        picker.setInvalid(true);
+        picker.setValue(null);
+        assertTrue(picker.isInvalid(),
+                "clearing the value must not clear client-owned invalid state");
+    }
+
+    @Test
+    void i18n_errorMessagesSerialized() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        picker.setI18n(new DateTimeComboPickerI18n()
+                .setBadInputErrorMessage("Cannot parse")
+                .setRequiredErrorMessage("Fill me in")
+                .setDateDisabledErrorMessage("Day off"));
+        String json = picker.getElement().getPropertyRaw("i18n").toString();
+        assertTrue(json.contains("Cannot parse"));
+        assertTrue(json.contains("Fill me in"));
+        assertTrue(json.contains("Day off"));
+    }
+
+    @Test
     void valueChangeListener_firesOnServerSideChange() {
         DateTimeComboPicker picker = new DateTimeComboPicker();
         LocalDateTime[] observed = new LocalDateTime[1];

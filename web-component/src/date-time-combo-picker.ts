@@ -121,6 +121,9 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   private __tokens: Token[] = parsePattern(DEFAULT_FORMAT);
   private __keepInputValue = false;
   private _tooltipController?: TooltipController;
+  private __violation: 'badInput' | 'required' | 'min' | 'max' | 'dateDisabled' | null = null;
+  private __i18nErrorActive = false;
+  private __userErrorMessage = '';
 
   static get is() {
     return 'date-time-combo-picker';
@@ -181,6 +184,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       i18n: {
         type: Object,
         value: () => ({ ...DEFAULT_I18N }),
+        observer: '__i18nChanged',
         sync: true,
       },
 
@@ -427,17 +431,73 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
 
   /**
    * Returns true if the field is valid: the typed text parses with the
-   * current format, required is satisfied, and the value is inside min/max.
+   * current format, required is satisfied, the value is inside min/max, and
+   * the value's date is not disabled. Records which constraint failed so
+   * that `validate()` can show the matching i18n error message.
    *
    * @return {boolean}
    */
   checkValidity(): boolean {
+    this.__violation = this.__checkViolation();
+    return this.__violation === null;
+  }
+
+  /** @private */
+  __checkViolation(): 'badInput' | 'required' | 'min' | 'max' | 'dateDisabled' | null {
     const text = (this as any)._inputElementValue as string | undefined;
-    const inputParses = !text || !!parseDateTime(this.__tokens, text);
-    const requiredOk = !this.required || !!this.value;
-    const rangeOk = !this.value || this.__isInRange(this.value);
-    const dateEnabled = !this.value || !this.__isValueDateDisabled(this.value);
-    return inputParses && requiredOk && rangeOk && dateEnabled;
+    if (text && !parseDateTime(this.__tokens, text, this.__meridiems())) {
+      return 'badInput';
+    }
+    if (this.required && !this.value) {
+      return 'required';
+    }
+    if (this.value) {
+      const parts = parseIsoDateTime(this.value);
+      if (parts) {
+        const iso = toIsoDateTime(parts);
+        const minParts = this.min ? parseIsoDateTime(this.min) : null;
+        if (minParts && iso < toIsoDateTime(minParts)) {
+          return 'min';
+        }
+        const maxParts = this.max ? parseIsoDateTime(this.max) : null;
+        if (maxParts && iso > toIsoDateTime(maxParts)) {
+          return 'max';
+        }
+      }
+      if (this.__isValueDateDisabled(this.value)) {
+        return 'dateDisabled';
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Override a method from `ValidateMixin`: after validating, show the
+   * i18n error message matching the failed constraint, falling back to the
+   * generic `errorMessage` when no specific message is configured.
+   * @override
+   */
+  validate(): boolean {
+    const result = super.validate();
+    this.__applyConstraintErrorMessage();
+    return result;
+  }
+
+  /** @private */
+  __applyConstraintErrorMessage() {
+    // Remember the user-set generic message while no i18n message is shown
+    if (!this.__i18nErrorActive) {
+      this.__userErrorMessage = (this as any).errorMessage ?? '';
+    }
+    const i18n = { ...DEFAULT_I18N, ...this.i18n };
+    const specific = this.__violation ? i18n[`${this.__violation}ErrorMessage`] : '';
+    if (specific) {
+      (this as any).errorMessage = specific;
+      this.__i18nErrorActive = true;
+    } else if (this.__i18nErrorActive) {
+      (this as any).errorMessage = this.__userErrorMessage;
+      this.__i18nErrorActive = false;
+    }
   }
 
   /** @private */
@@ -490,7 +550,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       return;
     }
     const parts = value ? parseIsoDateTime(value as string) : null;
-    (this as any)._inputElementValue = parts ? formatDateTime(this.__tokens, parts) : '';
+    (this as any)._inputElementValue = parts ? formatDateTime(this.__tokens, parts, this.__meridiems()) : '';
   }
 
   /**
@@ -591,6 +651,20 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     if (this.inputElement) {
       this._forwardInputValue(this.value);
     }
+  }
+
+  /** @private */
+  __i18nChanged() {
+    // AM/PM strings may have changed; re-render the displayed text
+    if (this.inputElement) {
+      this._forwardInputValue(this.value);
+    }
+  }
+
+  /** The effective AM/PM marker strings from the i18n object. @private */
+  __meridiems(): { am: string; pm: string } {
+    const i18n = { ...DEFAULT_I18N, ...this.i18n };
+    return { am: i18n.am, pm: i18n.pm };
   }
 
   /** @private */
@@ -763,7 +837,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     if (!text) {
       this.value = '';
     } else {
-      const parts = parseDateTime(this.__tokens, text);
+      const parts = parseDateTime(this.__tokens, text, this.__meridiems());
       if (parts) {
         this.value = toIsoDateTime(parts);
         // Normalize the text even when the value did not change
@@ -806,23 +880,6 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     return date;
   }
 
-  /** @private */
-  __isInRange(value: string): boolean {
-    const parts = parseIsoDateTime(value);
-    if (!parts) {
-      return false;
-    }
-    const iso = toIsoDateTime(parts);
-    const minParts = this.min ? parseIsoDateTime(this.min) : null;
-    const maxParts = this.max ? parseIsoDateTime(this.max) : null;
-    if (minParts && iso < toIsoDateTime(minParts)) {
-      return false;
-    }
-    if (maxParts && iso > toIsoDateTime(maxParts)) {
-      return false;
-    }
-    return true;
-  }
 }
 
 defineCustomElement(DateTimeComboPicker);

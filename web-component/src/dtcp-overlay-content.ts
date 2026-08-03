@@ -41,6 +41,16 @@ export interface DtcpI18n {
   meridiem: string;
   am: string;
   pm: string;
+  /** Error message shown when the typed text does not match the format. Empty: use `errorMessage`. */
+  badInputErrorMessage: string;
+  /** Error message shown when a required field is empty. Empty: use `errorMessage`. */
+  requiredErrorMessage: string;
+  /** Error message shown when the value is earlier than `min`. Empty: use `errorMessage`. */
+  minErrorMessage: string;
+  /** Error message shown when the value is later than `max`. Empty: use `errorMessage`. */
+  maxErrorMessage: string;
+  /** Error message shown when the value's date is disabled via `isDateDisabled`. Empty: use `errorMessage`. */
+  dateDisabledErrorMessage: string;
 }
 
 export const DEFAULT_I18N: DtcpI18n = {
@@ -74,6 +84,11 @@ export const DEFAULT_I18N: DtcpI18n = {
   meridiem: 'AM/PM',
   am: 'AM',
   pm: 'PM',
+  badInputErrorMessage: '',
+  requiredErrorMessage: '',
+  minErrorMessage: '',
+  maxErrorMessage: '',
+  dateDisabledErrorMessage: '',
 };
 
 const MIN_YEAR = 1900;

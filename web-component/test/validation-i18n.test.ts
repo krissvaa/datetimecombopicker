@@ -35,17 +35,22 @@ describe('meridiem localization in the format engine', () => {
     expect(parseDateTime(tokens, '3:05 AP.', FI_MERIDIEMS)!.hours).to.equal(3);
   });
 
-  it('parses unambiguous single-character abbreviations', () => {
+  it('parses unambiguous marker prefixes of any length', () => {
     expect(parseDateTime(tokens, '3:05 i', FI_MERIDIEMS)!.hours).to.equal(15);
+    expect(parseDateTime(tokens, '3:05 ip', FI_MERIDIEMS)!.hours).to.equal(15);
     expect(parseDateTime(tokens, '3:05 a', FI_MERIDIEMS)!.hours).to.equal(3);
+    expect(parseDateTime(tokens, '3:05 ap', FI_MERIDIEMS)!.hours).to.equal(3);
+    const dotted = { am: 'a.m.', pm: 'p.m.' };
+    expect(parseDateTime(tokens, '3:05 a.m.', dotted)!.hours).to.equal(3);
+    expect(parseDateTime(tokens, '3:05 p.m', dotted)!.hours).to.equal(15);
   });
 
-  it('rejects single characters when the markers share a first letter', () => {
-    const ambiguous = { am: 'a.m.', pm: 'p.m.' };
-    expect(parseDateTime(tokens, '3:05 a.m.', ambiguous)!.hours).to.equal(3);
+  it('rejects prefixes shared by both markers', () => {
     const sameFirst = { am: 'x-am', pm: 'x-pm' };
     expect(parseDateTime(tokens, '3:05 x', sameFirst)).to.equal(null);
-    expect(parseDateTime(tokens, '3:05 x-pm', sameFirst)!.hours).to.equal(15);
+    expect(parseDateTime(tokens, '3:05 x-', sameFirst)).to.equal(null);
+    expect(parseDateTime(tokens, '3:05 x-p', sameFirst)!.hours).to.equal(15);
+    expect(parseDateTime(tokens, '3:05 x-am', sameFirst)!.hours).to.equal(3);
   });
 
   it('handles one marker being a prefix of the other', () => {

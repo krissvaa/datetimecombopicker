@@ -221,9 +221,11 @@ function readDigits(state: ParseState, minLen: number, maxLen: number): number |
 }
 
 /**
- * Matches a localized AM/PM marker at the given position. Accepts the full
- * marker string (case-insensitively) or, when the two markers start with
- * different characters, their single-character abbreviation.
+ * Matches a localized AM/PM marker at the given position. A complete marker
+ * (case-insensitive) always wins; otherwise any partial prefix of a marker
+ * is accepted as long as it does not equally match the other marker
+ * (e.g. with markers `ap.`/`ip.`, the inputs `a`, `ap`, `i` and `ip` all
+ * resolve, while markers `x-am`/`x-pm` require at least `x-a`/`x-p`).
  * Returns the matched meridiem and its consumed length, or null.
  */
 function matchMeridiem(
@@ -235,7 +237,8 @@ function matchMeridiem(
   const am = meridiems.am.toLowerCase();
   const pm = meridiems.pm.toLowerCase();
 
-  // Full markers, longest first so one being a prefix of the other works
+  // Complete markers take precedence, longest first so that one marker
+  // being a prefix of the other still resolves correctly
   const full: Array<{ meridiem: 'am' | 'pm'; marker: string }> = [
     { meridiem: 'am' as const, marker: am },
     { meridiem: 'pm' as const, marker: pm },
@@ -246,13 +249,19 @@ function matchMeridiem(
     }
   }
 
-  // Single-character abbreviations, only when unambiguous
-  if (am[0] !== pm[0]) {
-    if (rest.startsWith(am[0])) {
-      return { meridiem: 'am', length: 1 };
+  // Partial prefixes, longest first; both matching means the prefixes are
+  // identical, and every shorter prefix would be equally ambiguous
+  for (let length = Math.max(am.length, pm.length) - 1; length >= 1; length--) {
+    const amMatches = length < am.length && rest.startsWith(am.slice(0, length));
+    const pmMatches = length < pm.length && rest.startsWith(pm.slice(0, length));
+    if (amMatches && pmMatches) {
+      return null;
     }
-    if (rest.startsWith(pm[0])) {
-      return { meridiem: 'pm', length: 1 };
+    if (amMatches) {
+      return { meridiem: 'am', length };
+    }
+    if (pmMatches) {
+      return { meridiem: 'pm', length };
     }
   }
   return null;

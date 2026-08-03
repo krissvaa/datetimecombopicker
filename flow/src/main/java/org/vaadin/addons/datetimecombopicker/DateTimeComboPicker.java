@@ -496,9 +496,11 @@ public class DateTimeComboPicker
      * nothing when manual validation is enabled (e.g. by {@code Binder}).
      *
      * <p>
-     * Note that a date-disabled function set with
-     * {@link #setDateDisabledFunction(String)} is evaluated only in the
-     * browser and is not part of this server-side validation.
+     * The server only toggles the invalid state; the error message is always
+     * chosen by the client-side validation, which knows the failed
+     * constraint and the configured i18n messages. Note that a date-disabled
+     * function set with {@link #setDateDisabledFunction(String)} is evaluated
+     * only in the browser and is not part of this server-side validation.
      */
     protected void validate() {
         if (manualValidation) {
@@ -513,27 +515,13 @@ public class DateTimeComboPicker
         }
         LocalDateTime min = getMin();
         LocalDateTime max = getMax();
-        if (min != null && value.isBefore(min)) {
-            setInvalid(true);
-            applyI18nErrorMessage(
-                    i18n == null ? null : i18n.getMinErrorMessage());
-        } else if (max != null && value.isAfter(max)) {
-            setInvalid(true);
-            applyI18nErrorMessage(
-                    i18n == null ? null : i18n.getMaxErrorMessage());
-        } else {
-            setInvalid(false);
-            // Client-only constraints (e.g. a date-disabled function) cannot
-            // be evaluated here; let the client re-validate so its verdict is
-            // not lost.
-            getElement().executeJs("this.validate && this.validate();");
-        }
-    }
-
-    private void applyI18nErrorMessage(String message) {
-        if (message != null && !message.isEmpty()) {
-            setErrorMessage(message);
-        }
+        boolean outOfRange = (min != null && value.isBefore(min))
+                || (max != null && value.isAfter(max));
+        setInvalid(outOfRange);
+        // Re-run the client-side validation: it evaluates client-only
+        // constraints (e.g. the date-disabled function) and applies the
+        // i18n error message matching the failed constraint.
+        getElement().executeJs("this.validate && this.validate();");
     }
 
     /**

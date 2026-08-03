@@ -143,8 +143,11 @@ Examples: `dd.MM.yyyy HH:mm` (default), `dd.MM.yyyy HH:mm:ss`, `M/d/yyyy h:mm a`
 | `setLabel`, `setPlaceholder`, `setHelperText`, `setErrorMessage`, `setRequiredIndicatorVisible`, `setEnabled`, `setReadOnly`, `setTooltipText` | standard field properties | Inherited Vaadin field API; works with `Binder` |
 
 Events: `value-changed`, `opened-changed`, `invalid-changed`, `change`
-(Flow: `addValueChangeListener`). Full reference in the
-[element JSDoc](web-component/src/date-time-combo-picker.ts) and the Javadoc.
+(Flow: `addValueChangeListener`).
+
+**Full documentation: [docs/guide.md](docs/guide.md)** — format reference, all
+options with examples, validation & Binder, i18n reference, keyboard
+interaction, styling parts, architecture notes.
 
 ## Development
 

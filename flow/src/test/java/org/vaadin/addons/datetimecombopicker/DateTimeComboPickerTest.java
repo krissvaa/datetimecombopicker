@@ -247,18 +247,19 @@ class DateTimeComboPickerTest {
     }
 
     @Test
-    void serverSideValidation_usesI18nErrorMessages() {
+    void serverSideValidation_neverWritesErrorMessage() {
+        // Message selection is owned by the client-side validation; the
+        // server writing errorMessage would corrupt the client's fallback
+        // tracking of the user-set generic message.
         DateTimeComboPicker picker = new DateTimeComboPicker();
+        picker.setErrorMessage("Generic");
         picker.setI18n(new DateTimeComboPickerI18n()
-                .setMinErrorMessage("Too early").setMaxErrorMessage("Too late"));
+                .setMinErrorMessage("Too early"));
         picker.setMin(LocalDateTime.of(2026, 1, 1, 0, 0));
-        picker.setMax(LocalDateTime.of(2026, 12, 31, 23, 59));
 
         picker.setValue(LocalDateTime.of(2025, 6, 15, 10, 0));
-        assertEquals("Too early", picker.getErrorMessage());
-
-        picker.setValue(LocalDateTime.of(2027, 6, 15, 10, 0));
-        assertEquals("Too late", picker.getErrorMessage());
+        assertTrue(picker.isInvalid());
+        assertEquals("Generic", picker.getErrorMessage());
     }
 
     @Test

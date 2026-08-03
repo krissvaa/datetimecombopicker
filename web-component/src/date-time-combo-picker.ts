@@ -148,6 +148,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       min: {
         type: String,
         value: null,
+        observer: '__constraintsChanged',
         sync: true,
       },
 
@@ -155,6 +156,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       max: {
         type: String,
         value: null,
+        observer: '__constraintsChanged',
         sync: true,
       },
 
@@ -217,6 +219,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
        */
       isDateDisabled: {
         type: Object,
+        observer: '__constraintsChanged',
         sync: true,
       },
 
@@ -405,10 +408,27 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
 
     const overlay = this.$.overlay as DtcpOverlay;
     (overlay as any).positionTarget = this.$.inputContainer;
+    // Clicks on this field must not count as outside clicks for the overlay
+    (overlay as any).owner = this;
     // When the popup closes while focus is inside it (keyboard navigation),
     // move focus back to the input.
     (overlay as any).restoreFocusOnClose = true;
     (overlay as any).restoreFocusNode = this.inputElement;
+    // The overlay teleports to <body> when open, so focus leaving it does
+    // not pass through this element; track it on the overlay itself.
+    overlay.addEventListener('focusout', (event: FocusEvent) => {
+      const related = event.relatedTarget as Node | null;
+      if (this.opened && related && !overlay.contains(related) && !this.contains(related)) {
+        this.close();
+        (this as any)._setFocused(false);
+      }
+    });
+
+    // Popup semantics for assistive technology
+    this.inputElement.setAttribute('role', 'combobox');
+    this.inputElement.setAttribute('aria-haspopup', 'dialog');
+    this.inputElement.setAttribute('aria-expanded', 'false');
+    (this.$.overlayContent as HTMLElement).setAttribute('role', 'dialog');
 
     this.addController(
       new (MediaQueryController as any)(FULLSCREEN_MEDIA_QUERY, (matches: boolean) => {
@@ -650,6 +670,19 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     // Re-render the displayed text with the new format
     if (this.inputElement) {
       this._forwardInputValue(this.value);
+      this.__constraintsChanged();
+    }
+  }
+
+  /**
+   * Revalidates when a constraint (min/max/isDateDisabled/format) changes,
+   * so an invalid field can recover when a constraint is relaxed and a
+   * valid one is re-checked against a tightened constraint.
+   * @private
+   */
+  __constraintsChanged() {
+    if (this.inputElement && (this.invalid || this.value)) {
+      this.__requestValidation();
     }
   }
 
@@ -669,6 +702,12 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
 
   /** @private */
   __openedChanged(opened: boolean, oldOpened?: boolean) {
+    if (opened && (this.disabled || this.readonly)) {
+      // Guard direct property/attribute writes, like open() does
+      this.opened = false;
+      return;
+    }
+    this.inputElement?.setAttribute('aria-expanded', String(opened));
     if (opened) {
       requestAnimationFrame(() => {
         const content = this.$.overlayContent as DtcpOverlayContent;
@@ -688,6 +727,20 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     } else if (oldOpened) {
       // Closing without OK discards any staged (not applied) selection
       this._stagedParts = null;
+      this.__requestValidation();
+    }
+  }
+
+  /**
+   * Runs validation while honoring the manual-validation mode when the
+   * installed `ValidateMixin` supports it (Vaadin 24.5+).
+   * @private
+   */
+  __requestValidation() {
+    const requestValidation = (this as any)._requestValidation;
+    if (typeof requestValidation === 'function') {
+      requestValidation.call(this);
+    } else {
       this.validate();
     }
   }
@@ -708,7 +761,11 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   }
 
   /** @private */
-  __onInputContainerClick() {
+  __onInputContainerClick(event: Event) {
+    // The clear button lives in the same container; clearing must not open
+    if (this.$ && event.composedPath().includes(this.$.clearButton)) {
+      return;
+    }
     if (!this.autoOpenDisabled) {
       this.open();
     }
@@ -826,7 +883,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       this.value = iso;
       this.dispatchEvent(new CustomEvent('change', { bubbles: true }));
     }
-    this.validate();
+    this.__requestValidation();
   }
 
   /** @private */
@@ -854,7 +911,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     if (this.value !== oldValue) {
       this.dispatchEvent(new CustomEvent('change', { bubbles: true }));
     }
-    this.validate();
+    this.__requestValidation();
   }
 
   /** @private */

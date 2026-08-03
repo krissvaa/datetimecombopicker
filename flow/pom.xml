@@ -120,6 +120,12 @@
                                 <fileset>
                                     <directory>${project.build.outputDirectory}/META-INF/frontend</directory>
                                 </fileset>
+                                <!-- The demo copy is add-only (copy-resources);
+                                     clear it so files removed from
+                                     web-component/dist don't linger -->
+                                <fileset>
+                                    <directory>${project.basedir}/src/main/frontend/date-time-combo-picker</directory>
+                                </fileset>
                             </filesets>
                         </configuration>
                     </execution>

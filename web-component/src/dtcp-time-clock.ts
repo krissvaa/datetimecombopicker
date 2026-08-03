@@ -299,10 +299,11 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
         aria-valuemin="0"
         aria-valuemax="${this._activeView === 'hours' ? 23 : 59}"
         aria-valuenow="${this.__activeValue()}"
-        aria-valuetext="${pad2(this.__activeValue())}"
+        aria-valuetext="${this.__activeValueText()}"
         @pointerdown="${this.__onPointerDown}"
         @pointermove="${this.__onPointerMove}"
         @pointerup="${this.__onPointerUp}"
+        @pointercancel="${this.__onPointerCancel}"
         @keydown="${this.__onKeyDown}"
       >
         <div
@@ -361,6 +362,16 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
       return this._dragValue;
     }
     return this.__displayTime()[this._activeView];
+  }
+
+  /** Human-readable value announcement; 12h hours read as "3 PM". @private */
+  __activeValueText(): string {
+    const value = this.__activeValue();
+    if (this._activeView === 'hours' && this.config.use12h) {
+      const hour12 = value % 12 === 0 ? 12 : value % 12;
+      return `${hour12} ${value >= 12 ? this.i18n.pm : this.i18n.am}`;
+    }
+    return String(value).padStart(2, '0');
   }
 
   /** @private */
@@ -445,7 +456,12 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
           hour = index === 0 ? 12 : index;
         }
       }
-      return step === 1 ? hour : Math.round(hour / step) * step % 24;
+      if (step === 1) {
+        return hour;
+      }
+      // Snap to the step, wrapping to 0 (always a step multiple) at the top
+      const snapped = Math.round(hour / step) * step;
+      return snapped >= 24 ? 0 : snapped;
     }
 
     const step = this.__step(this._activeView);
@@ -475,6 +491,13 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
     const selected = this.__valueFromPointer(event);
     this._dragValue = null;
     this.__commitActiveValue(selected, true);
+  }
+
+  /** @private */
+  __onPointerCancel() {
+    // Aborted drag (e.g. the browser takes over the gesture): discard the
+    // in-progress value so the hand snaps back to the committed one
+    this._dragValue = null;
   }
 
   /** @private */

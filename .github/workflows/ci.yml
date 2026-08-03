@@ -44,9 +44,32 @@ jobs:
           cache: maven
       - run: mvn -B -ntp verify -Dvaadin.version=${{ matrix.vaadin }}
 
-  integration-tests:
-    name: Integration tests (demo app in Chromium)
+  directory-package:
+    name: Vaadin Directory package (assembly, sources, javadoc)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flow
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+      - run: mvn -B -ntp install -Pdirectory -DskipTests
+      - name: Verify zip contents
+        run: |
+          unzip -l target/datetimecombopicker-*.zip
+          unzip -p target/datetimecombopicker-*.zip META-INF/MANIFEST.MF | grep -q "Vaadin-Addon:"
+
+  integration-tests:
+    name: Integration tests (Vaadin ${{ matrix.vaadin }}, Chromium)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        vaadin: ['24.4.20', '24.10.8']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -68,9 +91,11 @@ jobs:
       - name: Run integration tests (starts the demo server)
         working-directory: it
         run: npx playwright test
+        env:
+          VAADIN_VERSION: ${{ matrix.vaadin }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.vaadin }}
           path: it/test-results/
           retention-days: 7

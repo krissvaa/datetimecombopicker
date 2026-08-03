@@ -16,10 +16,13 @@
 package org.vaadin.addons.datetimecombopicker;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 
 import com.vaadin.flow.component.AbstractSinglePropertyField;
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Focusable;
 import com.vaadin.flow.component.HasHelper;
 import com.vaadin.flow.component.HasLabel;
@@ -76,6 +79,8 @@ public class DateTimeComboPicker
 
     private DateTimeComboPickerI18n i18n;
     private boolean manualValidation;
+    private String dateDisabledFunction;
+    private boolean rangeInvalid;
 
     /**
      * Creates a new picker with no value and the default format
@@ -115,6 +120,43 @@ public class DateTimeComboPicker
     private static LocalDateTime parsePresentationValue(String value) {
         return value == null || value.isEmpty() ? null
                 : LocalDateTime.parse(value);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Rejects client-sent property values that are not parseable ISO-8601
+     * local date-times, instead of throwing during request processing.
+     */
+    @Override
+    protected boolean hasValidValue() {
+        String value = getElement().getProperty("value", "");
+        if (value.isEmpty()) {
+            return true;
+        }
+        try {
+            LocalDateTime.parse(value);
+            return true;
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * The value is truncated to seconds precision, matching what the
+     * component can represent and serialize.
+     */
+    @Override
+    public void setValue(LocalDateTime value) {
+        // Truncate before the value reaches the field support, so a value
+        // differing only in nanos from the current one is not stored as a
+        // new (untruncated) model value without a property change.
+        super.setValue(
+                value == null ? null : value.truncatedTo(ChronoUnit.SECONDS));
     }
 
     private static String formatPresentationValue(LocalDateTime value) {
@@ -340,15 +382,37 @@ public class DateTimeComboPicker
      * dates carry security or business meaning. Passing {@code null} removes
      * the function.
      *
+     * <p>
+     * <b>Security:</b> the expression is injected into the page as
+     * JavaScript, equivalent in power to
+     * {@code Element.executeJs}. It must be a developer-authored constant —
+     * never build it from user or request-derived input, or you create a
+     * script-injection (XSS) vulnerability.
+     *
      * @param jsFunctionExpression
      *            a JavaScript function expression, or {@code null} to remove
      */
     public void setDateDisabledFunction(String jsFunctionExpression) {
-        if (jsFunctionExpression == null) {
+        this.dateDisabledFunction = jsFunctionExpression;
+        applyDateDisabledFunction();
+    }
+
+    private void applyDateDisabledFunction() {
+        if (dateDisabledFunction == null) {
             getElement().executeJs("this.isDateDisabled = undefined;");
         } else {
             getElement().executeJs(
-                    "this.isDateDisabled = (" + jsFunctionExpression + ");");
+                    "this.isDateDisabled = (" + dateDisabledFunction + ");");
+        }
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        // executeJs state does not survive client-side element re-creation
+        // (detach/re-attach, @PreserveOnRefresh); re-apply the function
+        if (dateDisabledFunction != null) {
+            applyDateDisabledFunction();
         }
     }
 
@@ -480,6 +544,16 @@ public class DateTimeComboPicker
         getElement().setProperty("invalid", invalid);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Note: this reflects the server-known invalid state (set by
+     * {@link #setInvalid(boolean)} and the built-in server-side min/max
+     * validation). Constraints evaluated only in the browser — unparseable
+     * typed text, required-but-empty and the date-disabled function — are
+     * not reported back to the server and are not visible here.
+     */
     @Override
     public boolean isInvalid() {
         return getElement().getProperty("invalid", false);
@@ -510,13 +584,20 @@ public class DateTimeComboPicker
         if (value == null) {
             // Required/bad-input handling is owned by the client-side
             // validation; the server cannot distinguish "cleared" from
-            // "unparseable text" here.
+            // "unparseable text" here. Only undo this validator's own
+            // verdict so a previously out-of-range field doesn't stay
+            // invalid forever after being cleared.
+            if (rangeInvalid) {
+                rangeInvalid = false;
+                setInvalid(false);
+            }
             return;
         }
         LocalDateTime min = getMin();
         LocalDateTime max = getMax();
         boolean outOfRange = (min != null && value.isBefore(min))
                 || (max != null && value.isAfter(max));
+        rangeInvalid = outOfRange;
         setInvalid(outOfRange);
         // Re-run the client-side validation: it evaluates client-only
         // constraints (e.g. the date-disabled function) and applies the
@@ -531,6 +612,7 @@ public class DateTimeComboPicker
      *            the i18n object, not {@code null}
      */
     public void setI18n(DateTimeComboPickerI18n i18n) {
+        Objects.requireNonNull(i18n, "i18n must not be null");
         this.i18n = i18n;
         getElement().setPropertyJson("i18n", toJson(i18n));
     }

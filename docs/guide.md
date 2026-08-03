@@ -272,6 +272,15 @@ In the calendar:
 | <kbd>Enter</kbd> / <kbd>Space</kbd> | select the focused date |
 | <kbd>Escape</kbd> | close the popup, focus returns to the field |
 
+In the year grid (opened from the month-year header): arrows move by one
+year / one row, <kbd>Home</kbd>/<kbd>End</kbd> jump to the range bounds
+(1900–2099), <kbd>Enter</kbd> selects.
+
+The input carries combobox popup semantics (`role="combobox"`,
+`aria-expanded`, `aria-haspopup="dialog"`) and the popup itself is a
+`role="dialog"`. Tabbing out of the popup closes it and commits, like
+leaving the field.
+
 Time columns are listboxes (<kbd>ArrowUp</kbd>/<kbd>ArrowDown</kbd>/<kbd>Home</kbd>/<kbd>End</kbd>).
 The analog clock face is a slider per view: arrows adjust by one step,
 <kbd>Home</kbd>/<kbd>End</kbd> jump to the first/last value.
@@ -355,9 +364,14 @@ current Vaadin version, and the Playwright integration tests.
 
 ## Limitations
 
-- No timezone support — the value is a `LocalDateTime` by design.
+- No timezone support — the value is a `LocalDateTime` by design. Element
+  `value` strings carrying timezone designators (`Z`, offsets) are rejected,
+  not reinterpreted.
 - Sub-second precision is not supported in patterns (no `SSS`); values are
-  truncated to seconds.
+  truncated to seconds on the server.
+- The Flow `isInvalid()` reflects the server-known state (min/max and
+  `setInvalid`); browser-only constraints (bad input, required, disabled
+  dates) are not reported back to the server.
 - The date-disabled function is browser-only; re-validate server-side where it
   matters.
 - Week numbers require the week to start on Monday (inherited from

@@ -426,9 +426,14 @@ export function deriveTimeConfig(tokens: Token[]): TimeConfig {
   return { hasDate, hasTime, use12h, showHours, showMinutes, showSeconds, showMeridiem };
 }
 
-/** Parses an ISO-8601 local date-time string (yyyy-MM-ddTHH:mm[:ss]) into parts. */
+/**
+ * Parses an ISO-8601 local date-time string (yyyy-MM-ddTHH:mm[:ss]) into
+ * parts. Strings with anything extra — timezone designators (`Z`, offsets)
+ * or sub-second precision — are rejected rather than silently reinterpreted
+ * as local wall time.
+ */
 export function parseIsoDateTime(iso: string): DateTimeParts | null {
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/u.exec(iso);
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/u.exec(iso);
   if (!match) {
     return null;
   }

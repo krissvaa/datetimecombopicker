@@ -33,7 +33,8 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json && node scripts/copy-vendor.mjs",
     "test": "web-test-runner",
-    "test:watch": "web-test-runner --watch"
+    "test:watch": "web-test-runner --watch",
+    "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {
     "@open-wc/dedupe-mixin": "^1.4.0",

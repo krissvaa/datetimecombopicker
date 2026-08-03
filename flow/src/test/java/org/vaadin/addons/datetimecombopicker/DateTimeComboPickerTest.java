@@ -296,6 +296,58 @@ class DateTimeComboPickerTest {
     }
 
     @Test
+    void serverSideValidation_rangeInvalidClearsWhenValueCleared() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        picker.setMin(LocalDateTime.of(2026, 1, 1, 0, 0));
+        picker.setValue(LocalDateTime.of(2025, 6, 15, 10, 0));
+        assertTrue(picker.isInvalid());
+        picker.setValue(null);
+        assertFalse(picker.isInvalid(),
+                "range invalidity must clear when the value is cleared");
+    }
+
+    @Test
+    void setValue_nanoDifferenceDoesNotFireValueChange() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        LocalDateTime base = LocalDateTime.of(2026, 7, 30, 13, 5, 42);
+        picker.setValue(base);
+        int[] events = new int[1];
+        picker.addValueChangeListener(e -> events[0]++);
+        picker.setValue(base.plusNanos(1));
+        assertEquals(0, events[0],
+                "a value differing only in nanos must not fire a change");
+        assertEquals(base, picker.getValue());
+    }
+
+    @Test
+    void hasValidValue_rejectsMalformedClientProperty() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        picker.getElement().setProperty("value", "garbage");
+        // The malformed value must be rejected, not throw during sync
+        assertFalse(pickerHasValidValue(picker));
+    }
+
+    private static boolean pickerHasValidValue(DateTimeComboPicker picker) {
+        try {
+            java.lang.reflect.Method method = DateTimeComboPicker.class
+                    .getDeclaredMethod("hasValidValue");
+            method.setAccessible(true);
+            return (boolean) method.invoke(picker);
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    @Test
+    void setI18n_null_throwsWithMessage() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        NullPointerException npe = org.junit.jupiter.api.Assertions
+                .assertThrows(NullPointerException.class,
+                        () -> picker.setI18n(null));
+        assertTrue(npe.getMessage().contains("i18n"));
+    }
+
+    @Test
     void valueChangeListener_firesOnServerSideChange() {
         DateTimeComboPicker picker = new DateTimeComboPicker();
         LocalDateTime[] observed = new LocalDateTime[1];

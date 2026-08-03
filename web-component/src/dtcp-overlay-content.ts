@@ -410,13 +410,14 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
         </div>
         ${this._yearViewOpen
           ? html`
-              <div part="year-grid" role="listbox" aria-label="${this.i18n.year}">
+              <div part="year-grid" role="listbox" aria-label="${this.i18n.year}" @keydown="${this.__onYearGridKeyDown}">
                 ${this.__years().map(
                   (year) => html`
                     <button
                       part="year-cell ${year === month.getFullYear() ? 'year-cell-selected' : ''}"
                       role="option"
                       aria-selected="${String(year === month.getFullYear())}"
+                      tabindex="${year === month.getFullYear() ? '0' : '-1'}"
                       data-year="${year}"
                       @click="${() => this.__selectYear(year)}"
                     >
@@ -440,7 +441,9 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
                 @keydown="${this.__onCalendarKeyDown}"
               ></dtcp-month-calendar>
               <div part="calendar-footer">
-                <button part="today-button" @click="${this.__onTodayClick}">${this.i18n.today}</button>
+                <button part="today-button" ?disabled="${!this.__todayAllowed()}" @click="${this.__onTodayClick}">
+                  ${this.i18n.today}
+                </button>
               </div>
             `}
       </div>
@@ -491,7 +494,9 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
   initialize() {
     const position = this.selectedDate ?? this.initialPosition ?? new Date();
     this._displayedMonth = new Date(position.getFullYear(), position.getMonth(), 1);
-    this.focusedDate = this.selectedDate ?? this.__normalize(position);
+    // Normalized to midnight: the focused date is compared against min/max
+    // date boundaries, so a carried time-of-day would reject boundary days
+    this.focusedDate = this.__normalize(position);
     this._yearViewOpen = false;
     const columns = this.shadowRoot!.querySelector<TimeColumns>('dtcp-time-columns');
     if (columns) {
@@ -532,10 +537,15 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     }
   }
 
-  /** Moves keyboard focus onto the first time column. */
+  /** Moves keyboard focus onto the time selector (first column or clock face). */
   focusTimeColumns() {
     const columns = this.shadowRoot!.querySelector<TimeColumns>('dtcp-time-columns');
-    columns?.shadowRoot!.querySelector<HTMLElement>('[part="column"]')?.focus();
+    if (columns) {
+      columns.shadowRoot!.querySelector<HTMLElement>('[part="column"]')?.focus();
+      return;
+    }
+    const clock = this.shadowRoot!.querySelector<TimeClock>('dtcp-time-clock');
+    clock?.shadowRoot!.querySelector<HTMLElement>('[part="clock-face"]')?.focus();
   }
 
   /** @private */
@@ -559,20 +569,26 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
   __selectedDateChanged(date: Date | null) {
     if (date) {
       this._displayedMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-      this.focusedDate = date;
+      this.focusedDate = this.__normalize(date);
     }
   }
 
   /** @private */
   __prevMonth() {
     const m = this._displayedMonth;
-    this._displayedMonth = new Date(m.getFullYear(), m.getMonth() - 1, 1);
+    const previous = new Date(m.getFullYear(), m.getMonth() - 1, 1);
+    if (previous.getFullYear() >= MIN_YEAR) {
+      this._displayedMonth = previous;
+    }
   }
 
   /** @private */
   __nextMonth() {
     const m = this._displayedMonth;
-    this._displayedMonth = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+    const next = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+    if (next.getFullYear() <= MAX_YEAR) {
+      this._displayedMonth = next;
+    }
   }
 
   /** @private */
@@ -591,14 +607,62 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     this.shadowRoot!.querySelector<HTMLElement>('[part~="year-cell-selected"]')?.focus();
   }
 
+  /**
+   * Roving keyboard navigation in the year grid (4 columns): arrows move by
+   * one year / one row, Home/End jump to the range bounds.
+   * @private
+   */
+  __onYearGridKeyDown(event: KeyboardEvent) {
+    const target = event.composedPath()[0] as HTMLElement;
+    const currentYear = Number(target?.dataset?.year);
+    if (!Number.isInteger(currentYear)) {
+      return;
+    }
+
+    let nextYear: number | null = null;
+    const rtl = getComputedStyle(this).direction === 'rtl';
+    switch (event.key) {
+      case 'ArrowRight':
+        nextYear = currentYear + (rtl ? -1 : 1);
+        break;
+      case 'ArrowLeft':
+        nextYear = currentYear + (rtl ? 1 : -1);
+        break;
+      case 'ArrowDown':
+        nextYear = currentYear + 4;
+        break;
+      case 'ArrowUp':
+        nextYear = currentYear - 4;
+        break;
+      case 'Home':
+        nextYear = MIN_YEAR;
+        break;
+      case 'End':
+        nextYear = MAX_YEAR;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    nextYear = Math.min(MAX_YEAR, Math.max(MIN_YEAR, nextYear));
+    const cell = this.shadowRoot!.querySelector<HTMLElement>(`[data-year="${nextYear}"]`);
+    if (cell) {
+      cell.scrollIntoView({ block: 'nearest' });
+      cell.focus();
+    }
+  }
+
   /** @private */
   async __selectYear(year: number) {
     const m = this._displayedMonth;
     this._displayedMonth = new Date(year, m.getMonth(), 1);
     if (this.focusedDate) {
-      const f = new Date(this.focusedDate);
-      f.setFullYear(year);
-      this.focusedDate = f;
+      const f = this.focusedDate;
+      // Clamp the day so e.g. Feb 29 doesn't roll over into March
+      const lastDay = new Date(year, f.getMonth() + 1, 0).getDate();
+      this.focusedDate = new Date(year, f.getMonth(), Math.min(f.getDate(), lastDay));
     }
     this._yearViewOpen = false;
     await this.focusDateCell();
@@ -610,8 +674,15 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
   }
 
   /** @private */
+  __todayAllowed(): boolean {
+    return dateAllowed(this.__normalize(new Date()), this.minDate, this.maxDate, this.isDateDisabled);
+  }
+
+  /** @private */
   __onTodayClick() {
-    this.dispatchEvent(new CustomEvent('date-selected', { detail: { date: new Date() } }));
+    if (this.__todayAllowed()) {
+      this.dispatchEvent(new CustomEvent('date-selected', { detail: { date: new Date() } }));
+    }
   }
 
   /** @private */

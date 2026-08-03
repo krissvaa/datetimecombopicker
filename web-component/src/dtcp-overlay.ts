@@ -47,6 +47,23 @@ class DtcpOverlay extends PositionMixin(OverlayMixin(DirMixin(ThemableMixin(Poly
     return [overlayStyles, dtcpOverlayStyles];
   }
 
+  /**
+   * Override a method from `OverlayMixin`: clicks on the owning field (its
+   * input or toggle button) are not "outside" — without this, a click on the
+   * toggle would close-and-reopen the popup, and a click into the input to
+   * edit the text would close it (discarding a staged selection).
+   * @protected
+   * @override
+   */
+  _shouldCloseOnOutsideClick(event: Event): boolean {
+    const path = event.composedPath();
+    const owner = (this as any).owner;
+    if (owner && path.includes(owner)) {
+      return false;
+    }
+    return (super._shouldCloseOnOutsideClick as (event: Event) => boolean)(event);
+  }
+
   /** @protected */
   render() {
     return html`

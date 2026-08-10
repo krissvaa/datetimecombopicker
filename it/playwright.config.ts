@@ -45,7 +45,9 @@ export default defineConfig({
     // First run downloads Maven + npm dependencies and builds the dev bundle
     timeout: 900_000,
     reuseExistingServer: !process.env.CI,
-    stdout: 'ignore',
+    // Maven reports build errors on stdout; without piping it, a failed
+    // server start on CI gives no clue at all
+    stdout: process.env.CI ? 'pipe' : 'ignore',
     stderr: 'pipe',
   },
 });

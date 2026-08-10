@@ -317,9 +317,33 @@ layout instead: the calendar above a centered time selector.
 
 ## Styling
 
-The component uses the Lumo theme and inherits the standard Vaadin field
-styling (label, helper, error message, required indicator). Custom styling
-uses shadow parts:
+The component follows the Vaadin 25 styling model: it ships complete
+**base styles** built on the `--vaadin-*` design tokens, so it renders a
+usable monochrome look with no theme, and adopts the application theme's
+tokens automatically (typography, colors, radii, focus ring).
+
+The **selection accent** (selected date/time, OK button, active tab,
+Today) follows the theme's date-picker accent so the popup matches the
+app's date pickers out of the box:
+
+1. `--dtcp-selection-background` / `--dtcp-selection-color` — explicit
+   override, highest precedence;
+2. `--vaadin-date-picker-date-selected-background` / `-color` — set by
+   Aura and by custom themes;
+3. `--lumo-primary-color` / `--lumo-primary-contrast-color` — set by the
+   Lumo theme;
+4. the monochrome base (`--vaadin-text-color` on
+   `--vaadin-background-color`) otherwise.
+
+```css
+/* Give just this component a custom accent */
+date-time-combo-picker, dtcp-overlay {
+  --dtcp-selection-background: #7c3aed;
+  --dtcp-selection-color: white;
+}
+```
+
+Custom styling of individual elements uses shadow parts:
 
 ```css
 date-time-combo-picker::part(toggle-button) { color: purple; }

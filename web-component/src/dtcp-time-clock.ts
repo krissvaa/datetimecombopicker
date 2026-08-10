@@ -8,6 +8,7 @@
  * selection, one view per time part with automatic advancement.
  */
 import { css, html, LitElement, nothing } from 'lit';
+import '@vaadin/component-base/src/styles/style-props.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { defineCustomElement } from '@vaadin/component-base/src/define.js';
@@ -232,6 +233,120 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
 
       [hidden] {
         display: none !important;
+      }
+
+      /* Visual layer (Vaadin 25 base-styles model) */
+      :host {
+        --_accent-bg: var(
+          --dtcp-selection-background,
+          var(--vaadin-date-picker-date-selected-background, var(--lumo-primary-color, var(--vaadin-text-color)))
+        );
+        --_accent-fg: var(
+          --dtcp-selection-color,
+          var(--vaadin-date-picker-date-selected-color, var(--lumo-primary-contrast-color, var(--vaadin-background-color)))
+        );
+        color: var(--vaadin-text-color);
+        padding: var(--vaadin-padding-s, 0.5rem);
+        gap: var(--vaadin-gap-s, 0.5rem);
+        --_face-size: calc(2.25rem * 6.5);
+      }
+
+      [part='clock-readout'] {
+        font-size: 1.375rem;
+        font-variant-numeric: tabular-nums;
+        gap: var(--vaadin-gap-xs, 0.25rem);
+      }
+
+      [part~='readout-segment'] {
+        padding: 0 0.25rem;
+        border-radius: var(--vaadin-radius-m);
+        color: var(--vaadin-text-color-secondary);
+        cursor: var(--vaadin-clickable-cursor);
+      }
+
+      [part~='readout-segment']:hover {
+        background-color: var(--vaadin-background-container);
+      }
+
+      [part~='readout-segment-active'] {
+        color: var(--vaadin-text-color);
+        background-color: var(--vaadin-background-container-strong);
+      }
+
+      [part='readout-separator'] {
+        color: var(--vaadin-text-color-secondary);
+      }
+
+      [part='meridiem-toggle'] {
+        display: inline-flex;
+        flex-direction: column;
+        margin-inline-start: 0.5rem;
+        gap: 2px;
+      }
+
+      [part~='meridiem-button'] {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        line-height: 1;
+        padding: 0.25rem;
+        border-radius: var(--vaadin-radius-s);
+        color: var(--vaadin-text-color-secondary);
+        cursor: var(--vaadin-clickable-cursor);
+      }
+
+      [part~='meridiem-button']:hover {
+        background-color: var(--vaadin-background-container);
+      }
+
+      [part~='meridiem-button-selected'] {
+        color: var(--_accent-fg);
+        background-color: var(--_accent-bg);
+      }
+
+      [part='clock-face'] {
+        background-color: var(--vaadin-background-container);
+        cursor: var(--vaadin-clickable-cursor);
+      }
+
+      [part='clock-face']:focus-visible {
+        outline: var(--vaadin-focus-ring-width, 2px) solid var(--vaadin-focus-ring-color, var(--vaadin-text-color));
+        outline-offset: 1px;
+      }
+
+      [part~='clock-number'] {
+        width: 1.875rem;
+        height: 1.875rem;
+        border-radius: 50%;
+        font-size: 0.875rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      [part~='clock-number-inner'] {
+        font-size: 0.8125rem;
+        color: var(--vaadin-text-color-secondary);
+      }
+
+      [part~='clock-number-selected'],
+      [part~='clock-number-inner'][part~='clock-number-selected'] {
+        color: var(--_accent-fg);
+      }
+
+      [part='clock-hand'] {
+        background: var(--_accent-bg);
+      }
+
+      [part='clock-hand']::before {
+        width: 1.875rem;
+        height: 1.875rem;
+        background-color: var(--_accent-bg);
+      }
+
+      [part='clock-hand-label'] {
+        width: 1.875rem;
+        height: 1.875rem;
+        font-size: 0.875rem;
+        font-variant-numeric: tabular-nums;
+        color: var(--_accent-fg);
       }
     `;
   }

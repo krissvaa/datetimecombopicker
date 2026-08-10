@@ -7,6 +7,7 @@
  * scrollable column per time part, click to select.
  */
 import { css, html, LitElement, nothing } from 'lit';
+import '@vaadin/component-base/src/styles/style-props.js';
 import { defineCustomElement } from '@vaadin/component-base/src/define.js';
 import { PolylitMixin } from '@vaadin/component-base/src/polylit-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
@@ -142,6 +143,56 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
         user-select: none;
         -webkit-user-select: none;
         text-align: center;
+      }
+
+      /* Visual layer (Vaadin 25 base-styles model) */
+      :host {
+        --_accent-bg: var(
+          --dtcp-selection-background,
+          var(--vaadin-date-picker-date-selected-background, var(--lumo-primary-color, var(--vaadin-text-color)))
+        );
+        --_accent-fg: var(
+          --dtcp-selection-color,
+          var(--vaadin-date-picker-date-selected-color, var(--lumo-primary-contrast-color, var(--vaadin-background-color)))
+        );
+        font-size: 0.875rem;
+        color: var(--vaadin-text-color);
+      }
+
+      [part='column'] {
+        --_dtcp-cell-height: 1.875rem;
+        width: 2.75rem;
+        padding: 0 0.125rem;
+      }
+
+      [part='column'] + [part='column'] {
+        border-inline-start: 1px solid var(--vaadin-border-color-secondary);
+      }
+
+      [part~='time-cell'] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: var(--_dtcp-cell-height);
+        border-radius: var(--vaadin-radius-m);
+        cursor: var(--vaadin-clickable-cursor);
+        font-variant-numeric: tabular-nums;
+      }
+
+      [part~='time-cell']:hover {
+        background-color: var(--vaadin-background-container);
+      }
+
+      [part~='time-cell-selected'],
+      [part~='time-cell-selected']:hover {
+        background-color: var(--_accent-bg);
+        color: var(--_accent-fg);
+      }
+
+      [part='column']:focus-visible {
+        border-radius: var(--vaadin-radius-m);
+        outline: var(--vaadin-focus-ring-width, 2px) solid var(--vaadin-focus-ring-color, var(--vaadin-text-color));
+        outline-offset: -2px;
       }
     `;
   }

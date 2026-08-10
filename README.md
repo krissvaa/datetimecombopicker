@@ -191,7 +191,7 @@ against the consuming application's Vaadin 24 platform packages.
   forked files.
 - The popup is composed from the public `@vaadin/overlay` mixins, the field chrome
   from `@vaadin/field-base` — the same recipe Vaadin's own pickers use, so the
-  component inherits Lumo theming and form-field behavior.
+  component ships Vaadin 25 base styles: it follows the application theme (Lumo, Aura or custom) via the --vaadin-* design tokens and inherits standard form-field behavior.
 - The time selector is a set of free-scrolling digital-clock columns with
   click-to-select and keyboard support (`ArrowUp`/`ArrowDown`/`Home`/`End`).
   Alternatively, `time-view="clock"` renders an analog dial in the Material
@@ -225,7 +225,7 @@ This project stands on the shoulders of:
   Java component and this add-on needed a client-side calendar inside a single
   web-component popup.
 - [@vaadin/date-picker](https://github.com/vaadin/web-components/tree/main/packages/date-picker)
-  (Apache-2.0) — the forked month-calendar implementation and the Lumo theme CSS it
+  (Apache-2.0) — the forked month-calendar implementation and the theme CSS it
   ships with; also the reference for field/overlay composition.
 - [addon-starter-flow](https://github.com/vaadin/addon-starter-flow) — Maven
   conventions for Vaadin Directory add-ons (test-scope demo, directory assembly).

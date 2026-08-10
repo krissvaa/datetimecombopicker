@@ -20,6 +20,7 @@ import { InputControlMixin } from '@vaadin/field-base/src/input-control-mixin.js
 import { InputController } from '@vaadin/field-base/src/input-controller.js';
 import { LabelledInputController } from '@vaadin/field-base/src/labelled-input-controller.js';
 import { inputFieldShared } from '@vaadin/field-base/src/styles/input-field-shared-styles.js';
+import '@vaadin/component-base/src/styles/style-props.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
 import {
   dateToParts,
@@ -350,8 +351,8 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
           width: var(--vaadin-field-default-width, 14em);
         }
 
-        [part~='toggle-button'] {
-          cursor: pointer;
+        [part~='toggle-button']::before {
+          mask-image: var(--_vaadin-icon-calendar);
         }
       `,
     ];

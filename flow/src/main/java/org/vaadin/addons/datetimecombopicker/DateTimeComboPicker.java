@@ -33,7 +33,6 @@ import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.HasTheme;
 import com.vaadin.flow.component.HasValidation;
 import com.vaadin.flow.component.Tag;
-import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.shared.HasTooltip;
 
@@ -70,9 +69,6 @@ import tools.jackson.databind.node.ObjectNode;
  */
 @Tag("date-time-combo-picker")
 @JsModule("./date-time-combo-picker/date-time-combo-picker-lumo.js")
-// Vaadin 25 no longer loads the classic Lumo tokens (custom properties and
-// the lumo-icons font) that this component's styles use; bring them along
-@CssImport("@vaadin/vaadin-lumo-styles/dist/lumo.css")
 public class DateTimeComboPicker
         extends AbstractSinglePropertyField<DateTimeComboPicker, LocalDateTime>
         implements HasSize, HasStyle, HasLabel, HasHelper, HasValidation,

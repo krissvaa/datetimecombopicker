@@ -18,11 +18,52 @@ import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mix
 const dtcpOverlayStyles = css`
   [part='overlay'] {
     display: flex;
-    flex: auto;
+    /* Size the popup by its content instead of stretching to the viewport;
+       scroll when the viewport clamps it (field mid-screen in a short window) */
+    flex: none;
+    height: auto;
+    max-height: 100%;
+    overflow: auto;
+    -webkit-tap-highlight-color: transparent;
   }
 
   [part~='content'] {
     flex: auto;
+  }
+
+  :host([top-aligned]) [part~='overlay'] {
+    margin-top: var(--vaadin-gap-xs, 4px);
+  }
+
+  :host([bottom-aligned]) [part~='overlay'] {
+    margin-bottom: var(--vaadin-gap-xs, 4px);
+  }
+
+  /* Fullscreen (mobile): bottom sheet with a backdrop */
+  :host([fullscreen]) {
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-end;
+    padding: 0;
+  }
+
+  :host([fullscreen]) [part='overlay'] {
+    width: 100%;
+    max-height: 80vh;
+    margin: 0;
+    border-radius: var(--vaadin-radius-l, 0.75em) var(--vaadin-radius-l, 0.75em) 0 0;
+  }
+
+  /* Scroll inside the sheet when the content is taller than the 80vh cap
+     (e.g. the analog clock on a short viewport) */
+  :host([fullscreen]) [part='content'] {
+    overflow-y: auto;
+    padding: 0;
   }
 
   @media (forced-colors: active) {

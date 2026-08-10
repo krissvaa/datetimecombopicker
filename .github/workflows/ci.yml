@@ -30,8 +30,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Minimum supported platform and current latest
-        vaadin: ['24.4.20', '24.10.8']
+        # Minimum supported V25 platform and current latest
+        vaadin: ['25.1.11', '25.2.6']
     defaults:
       run:
         working-directory: flow
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: maven
       - run: mvn -B -ntp verify -Dvaadin.version=${{ matrix.vaadin }}
 
@@ -55,7 +55,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: maven
       - run: mvn -B -ntp install -Pdirectory -DskipTests
       - name: Verify zip contents
@@ -69,13 +69,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        vaadin: ['24.4.20', '24.10.8']
+        vaadin: ['25.1.11', '25.2.6']
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
           cache: maven
       - uses: actions/setup-node@v5
         with:

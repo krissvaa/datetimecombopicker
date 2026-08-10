@@ -21,7 +21,7 @@ This is a mono-repo with two packages:
 | Package | Artifact | For |
 | --- | --- | --- |
 | [`web-component/`](web-component) | npm `date-time-combo-picker` | Any web app (Lit-based web component) |
-| [`flow/`](flow) | Maven `org.vaadin.addons:datetimecombopicker` | Vaadin Flow 24.4+ (Java 17) |
+| [`flow/`](flow) | Maven `org.vaadin.addons:datetimecombopicker` | Vaadin Flow 25.1+ (Java 21) |
 
 ## Vaadin Flow usage
 
@@ -29,7 +29,7 @@ This is a mono-repo with two packages:
 <dependency>
     <groupId>org.vaadin.addons</groupId>
     <artifactId>datetimecombopicker</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -176,7 +176,7 @@ npm test           # VAADIN_VERSION=24.10.8 npm test to run against another plat
 ```
 
 CI (GitHub Actions) runs the web-component tests, `mvn verify` against the minimum
-(24.4) and latest supported Vaadin platform, and the Playwright integration tests.
+(25.1) and latest supported Vaadin platform, and the Playwright integration tests.
 
 The Flow jar bundles the compiled web component under `META-INF/frontend`, so the
 add-on has no npm-publication dependency; bare imports (`lit`, `@vaadin/*`) resolve

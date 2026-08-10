@@ -11,7 +11,7 @@ import { defineConfig, devices } from '@playwright/test';
  * this: since Vaadin 24.10, dev mode requires a signed-in Vaadin account
  * (license checker), which would block a headless build server.
  */
-const vaadinVersion = process.env.VAADIN_VERSION ?? '24.4.20';
+const vaadinVersion = process.env.VAADIN_VERSION ?? '25.2.6';
 const productionMode = process.env.VAADIN_PRODUCTION === 'true';
 
 export default defineConfig({

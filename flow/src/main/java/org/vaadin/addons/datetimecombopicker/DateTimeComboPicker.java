@@ -33,12 +33,14 @@ import com.vaadin.flow.component.HasStyle;
 import com.vaadin.flow.component.HasTheme;
 import com.vaadin.flow.component.HasValidation;
 import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.shared.HasTooltip;
 
-import elemental.json.Json;
-import elemental.json.JsonArray;
-import elemental.json.JsonObject;
+import com.vaadin.flow.internal.JacksonUtils;
+
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * A combined date and time picker: a single field with a {@link LocalDateTime}
@@ -68,6 +70,9 @@ import elemental.json.JsonObject;
  */
 @Tag("date-time-combo-picker")
 @JsModule("./date-time-combo-picker/date-time-combo-picker-lumo.js")
+// Vaadin 25 no longer loads the classic Lumo tokens (custom properties and
+// the lumo-icons font) that this component's styles use; bring them along
+@CssImport("@vaadin/vaadin-lumo-styles/dist/lumo.css")
 public class DateTimeComboPicker
         extends AbstractSinglePropertyField<DateTimeComboPicker, LocalDateTime>
         implements HasSize, HasStyle, HasLabel, HasHelper, HasValidation,
@@ -761,8 +766,8 @@ public class DateTimeComboPicker
         return i18n;
     }
 
-    private static JsonObject toJson(DateTimeComboPickerI18n i18n) {
-        JsonObject json = Json.createObject();
+    private static ObjectNode toJson(DateTimeComboPickerI18n i18n) {
+        ObjectNode json = JacksonUtils.createObjectNode();
         putStringArray(json, "monthNames", i18n.getMonthNames());
         putStringArray(json, "weekdays", i18n.getWeekdays());
         putStringArray(json, "weekdaysShort", i18n.getWeekdaysShort());
@@ -790,20 +795,18 @@ public class DateTimeComboPicker
         return json;
     }
 
-    private static void putString(JsonObject json, String key, String value) {
+    private static void putString(ObjectNode json, String key, String value) {
         if (value != null) {
             json.put(key, value);
         }
     }
 
-    private static void putStringArray(JsonObject json, String key,
+    private static void putStringArray(ObjectNode json, String key,
             List<String> values) {
         if (values != null) {
-            JsonArray array = Json.createArray();
-            for (int i = 0; i < values.size(); i++) {
-                array.set(i, values.get(i));
-            }
-            json.put(key, array);
+            ArrayNode array = JacksonUtils.createArrayNode();
+            values.forEach(array::add);
+            json.set(key, array);
         }
     }
 }

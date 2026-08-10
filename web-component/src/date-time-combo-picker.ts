@@ -718,16 +718,28 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
 
   /**
    * Override a method from `FocusMixin`: moving focus into the popup
-   * (keyboard navigation in the calendar) must not blur the field.
+   * (keyboard navigation in the calendar, clicks on popup buttons) must
+   * not blur the field. While the popup is open, only focus landing on a
+   * real element outside both the field and the popup counts as leaving:
+   * `null`/`document.body` happens transiently when a focused popup
+   * element is re-rendered away (e.g. selecting a year closes the year
+   * grid), and in Vaadin 25 the overlay lives in this element's shadow
+   * root, so a focus move into it retargets to this element itself.
    * @protected
    * @override
    */
   _shouldRemoveFocus(event: FocusEvent): boolean {
     const related = event.relatedTarget as Node | null;
-    if (related && this.$ && this.$.overlay.contains(related)) {
-      return false;
+    if (
+      this.opened &&
+      related !== null &&
+      related !== document.body &&
+      !this.contains(related) &&
+      !(this.$ && this.$.overlay.contains(related))
+    ) {
+      return true;
     }
-    return true;
+    return !this.opened;
   }
 
   /** @private */

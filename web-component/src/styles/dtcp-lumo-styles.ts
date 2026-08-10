@@ -10,13 +10,9 @@
  * Import this module BEFORE the element modules so that the styles are
  * registered when the custom elements are finalized.
  */
-import '@vaadin/vaadin-lumo-styles/color.js';
-import '@vaadin/vaadin-lumo-styles/sizing.js';
-import '@vaadin/vaadin-lumo-styles/spacing.js';
-import '@vaadin/vaadin-lumo-styles/style.js';
-import '@vaadin/vaadin-lumo-styles/typography.js';
-import '@vaadin/vaadin-lumo-styles/font-icons.js';
-import '@vaadin/input-container/theme/lumo/vaadin-input-container-styles.js';
+// Vaadin 25: the global Lumo tokens (custom properties, icon font) are
+// plain CSS provided by the application theme; the V24-era JS modules
+// (color.js, sizing.js, ...) no longer exist.
 import { inputFieldShared } from '@vaadin/vaadin-lumo-styles/mixins/input-field-shared.js';
 import { menuOverlay } from '@vaadin/vaadin-lumo-styles/mixins/menu-overlay.js';
 import { css, registerStyles } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';

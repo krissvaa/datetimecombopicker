@@ -139,6 +139,14 @@ describe('calendar keyboard navigation', () => {
     const overlay = picker.$.overlay;
     const fakeRelated = overlay.firstElementChild as Node; // overlay content
     expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: fakeRelated }))).to.be.false;
+    // Transient blur (focused popup element re-rendered away) keeps focus
+    expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: document.body }))).to.be.false;
+    expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: null }))).to.be.false;
+    // A real element outside the field and popup removes it
+    expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: document.head }))).to.be.true;
+    // When the popup is closed, any focusout blurs
+    picker.close();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: document.body }))).to.be.true;
   });
 });

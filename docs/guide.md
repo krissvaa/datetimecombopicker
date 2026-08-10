@@ -50,13 +50,13 @@ immediately and the action bar is hidden.
 
 ## Using with Vaadin Flow
 
-Requires Vaadin 24.4+ and Java 17.
+Requires Vaadin 25.1+ and Java 21. (For Vaadin 24.x, use the 1.x add-on version from the `main` branch.)
 
 ```xml
 <dependency>
     <groupId>org.vaadin.addons</groupId>
     <artifactId>datetimecombopicker</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -383,7 +383,7 @@ mvn install -Pdirectory    # -> target/datetimecombopicker-<version>.zip
 
 Releases: `./release.sh <version>` sets both versions, runs all builds and
 tests, publishes to npm and produces the Directory zip. CI (GitHub Actions)
-runs the web-component tests, `mvn verify` against the minimum (24.4) and a
+runs the web-component tests, `mvn verify` against the minimum (25.1) and a
 current Vaadin version, and the Playwright integration tests.
 
 ## Limitations

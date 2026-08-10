@@ -48,6 +48,17 @@ describe('overlay outside-click ownership', () => {
     expect(picker.opened).to.be.false;
   });
 
+  it('closes the fullscreen sheet on a backdrop click', async () => {
+    const picker = await pickerFixture();
+    (picker as any)._fullscreen = true;
+    await nextFrame();
+    await open(picker);
+    const backdrop = picker.$.overlay.shadowRoot!.querySelector('[part="backdrop"]')!;
+    outsideClick(backdrop);
+    await nextFrame();
+    expect(picker.opened).to.be.false;
+  });
+
   it('keeps a staged selection when clicking into the field', async () => {
     const picker = await pickerFixture(html`<date-time-combo-picker .autoApply="${false}"></date-time-combo-picker>`);
     await open(picker);

@@ -52,13 +52,19 @@ class DtcpOverlay extends PositionMixin(OverlayMixin(DirMixin(ThemableMixin(Poly
    * input or toggle button) are not "outside" — without this, a click on the
    * toggle would close-and-reopen the popup, and a click into the input to
    * edit the text would close it (discarding a staged selection).
+   *
+   * Only clicks that did NOT travel through this overlay count: in Vaadin
+   * 25 the overlay renders inside the owner's shadow root (no more teleport
+   * to body), so every click in the popup — including the fullscreen
+   * backdrop — has the owner in its composed path. The backdrop must still
+   * close the sheet.
    * @protected
    * @override
    */
   _shouldCloseOnOutsideClick(event: Event): boolean {
     const path = event.composedPath();
     const owner = (this as any).owner;
-    if (owner && path.includes(owner)) {
+    if (owner && path.includes(owner) && !path.includes(this)) {
       return false;
     }
     return (super._shouldCloseOnOutsideClick as (event: Event) => boolean)(event);

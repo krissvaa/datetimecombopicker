@@ -22,6 +22,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.data.binder.Binder;
@@ -105,15 +106,34 @@ public class DemoView extends VerticalLayout {
         weekdaysOnly.setErrorMessage("Weekends are not allowed");
         addWithValueOutput(weekdaysOnly);
 
-        DateTimeComboPicker staged = new DateTimeComboPicker(
-                "With OK/Cancel (setAutoApply(false))");
-        staged.setAutoApply(false);
-        addWithValueOutput(staged);
+        DateTimeComboPicker instant = new DateTimeComboPicker(
+                "Instant apply (setAutoApply(true))");
+        instant.setAutoApply(true);
+        addWithValueOutput(instant);
+
+        DateTimeComboPicker customActions = new DateTimeComboPicker(
+                "Custom action-bar button (addToActionBar)");
+        var nowButton = new com.vaadin.flow.component.button.Button("Now",
+                e -> {
+                    customActions.setValue(LocalDateTime.now()
+                            .truncatedTo(java.time.temporal.ChronoUnit.MINUTES));
+                    customActions.setOpened(false);
+                });
+        nowButton.addThemeVariants(
+                com.vaadin.flow.component.button.ButtonVariant.LUMO_TERTIARY,
+                com.vaadin.flow.component.button.ButtonVariant.LUMO_SMALL);
+        customActions.addToActionBar(nowButton);
+        addWithValueOutput(customActions);
 
         DateTimeComboPicker positioned = new DateTimeComboPicker(
                 "Initial position 2030-01-15 12:30");
         positioned.setInitialPosition(LocalDateTime.of(2030, 1, 15, 12, 30));
         addWithValueOutput(positioned);
+
+        DateTimeComboPicker stacked = new DateTimeComboPicker(
+                "Stacked mobile layout (setMobileTabs(false))");
+        stacked.setMobileTabs(false);
+        addWithValueOutput(stacked);
 
         DateTimeComboPicker localized = new DateTimeComboPicker(
                 "Localized (fi), week numbers, 12h with localized AM/PM");
@@ -161,7 +181,12 @@ public class DemoView extends VerticalLayout {
                 binderStatus.setText("Validation failed");
             }
         });
-        add(new HorizontalLayout(bound, validate), binderStatus);
+        HorizontalLayout binderRow = new HorizontalLayout(bound, validate);
+        // Line the button up with the input box (the field is taller
+        // because of its label)
+        binderRow.setDefaultVerticalComponentAlignment(
+                FlexComponent.Alignment.BASELINE);
+        add(binderRow, binderStatus);
     }
 
     private void addWithValueOutput(DateTimeComboPicker picker) {

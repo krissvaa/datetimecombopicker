@@ -106,9 +106,14 @@
       </div>
       <div>
         <date-time-combo-picker
-          id="staged"
-          label="OK/Cancel action bar"
+          label="Instant apply (no action bar)"
+          auto-apply
         ></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker id="withNowButton" label="Custom action-bar button">
+          <button slot="action-bar" id="nowButton" type="button">Now</button>
+        </date-time-combo-picker>
       </div>
       <div>
         <date-time-combo-picker label="Min/max (year 2026)" min="2026-01-01T00:00" max="2026-12-31T23:59">
@@ -120,6 +125,12 @@
       </div>
       <div>
         <date-time-combo-picker label="No auto-open (toggle only)" auto-open-disabled></date-time-combo-picker>
+      </div>
+      <div>
+        <date-time-combo-picker
+          label="Stacked mobile layout (no tabs)"
+          mobile-tabs-disabled
+        ></date-time-combo-picker>
       </div>
       <div>
         <date-time-combo-picker label="Required" required></date-time-combo-picker>
@@ -139,7 +150,11 @@
       document.getElementById('weekdaysOnly').isDateDisabled = (d) =>
         [0, 6].includes(new Date(d.year, d.month, d.day).getDay());
 
-      document.getElementById('staged').autoApply = false;
+      document.getElementById('nowButton').addEventListener('click', () => {
+        const picker = document.getElementById('withNowButton');
+        picker.value = new Date().toISOString().slice(0, 19);
+        picker.close();
+      });
 
       const localized = document.getElementById('localized');
       localized.format = 'd.M.yyyy h.mm a';

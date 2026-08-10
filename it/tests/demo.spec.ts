@@ -26,7 +26,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('demo page shows all pickers', async ({ page }) => {
-  await expect(page.locator('date-time-combo-picker')).toHaveCount(15);
+  await expect(page.locator('date-time-combo-picker')).toHaveCount(17);
 });
 
 test('mouse: pick a date and a time in one popup', async ({ page }) => {
@@ -45,6 +45,9 @@ test('mouse: pick a date and a time in one popup', async ({ page }) => {
   // Click hour 09 and minute 30 in the time columns
   await overlay.locator('[data-column="hours"] [data-value="9"]').click();
   await overlay.locator('[data-column="minutes"] [data-value="30"]').click();
+
+  // Selections are staged by default; OK applies them
+  await overlay.locator('[part="ok-action-button"]').click();
 
   const value = await pickerValue(target);
   expect(value).toMatch(/^\d{4}-\d{2}-15T09:30:00$/);
@@ -74,8 +77,11 @@ test('keyboard: navigate the calendar and select with Enter', async ({ page }) =
   await page.keyboard.press('ArrowRight'); // Jul 16
   await page.keyboard.press('ArrowDown'); // Jul 23
   await page.keyboard.press('Enter');
+  await openOverlay(page).locator('[part="ok-action-button"]').click();
   expect(await pickerValue(target)).toBe('2026-07-23T12:00:00');
 
+  await input.press('ArrowDown'); // reopen for the Escape check
+  await expect(openOverlay(page)).toBeVisible();
   await page.keyboard.press('Escape'); // closes and restores focus
   await expect(openOverlay(page)).toHaveCount(0);
   await expect(input).toBeFocused();
@@ -154,7 +160,7 @@ test('disabled dates (weekends) cannot be clicked', async ({ page }) => {
 });
 
 test('action bar stages selections until OK', async ({ page }) => {
-  const target = picker(page, 'With OK/Cancel');
+  const target = picker(page, 'Default (dd.MM.yyyy HH:mm)');
   await target.locator('input').click();
   const overlay = openOverlay(page);
 
@@ -172,7 +178,7 @@ test('action bar stages selections until OK', async ({ page }) => {
 });
 
 test('action bar Cancel discards the staged selection', async ({ page }) => {
-  const target = picker(page, 'With OK/Cancel');
+  const target = picker(page, 'Default (dd.MM.yyyy HH:mm)');
   await target.locator('input').click();
   const overlay = openOverlay(page);
   await overlay
@@ -191,6 +197,7 @@ test('initial position seeds the popup and defaults', async ({ page }) => {
   await expect(overlay.locator('[part="month-year-label"]')).toContainText('January 2030');
 
   await overlay.locator('[data-column="hours"] [data-value="9"]').click();
+  await overlay.locator('[part="ok-action-button"]').click();
   expect(await pickerValue(target)).toBe('2030-01-15T09:30:00');
 });
 
@@ -224,6 +231,7 @@ test('analog clock: tap an hour, auto-advance, tap minutes', async ({ page }) =>
   // Tap 6 o'clock (minute 30)
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2 + box.height * 0.39);
 
+  await overlay.locator('[part="ok-action-button"]').click();
   const value = await pickerValue(target);
   expect(value).toMatch(/T03:30:00$/);
 });

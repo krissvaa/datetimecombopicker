@@ -4,7 +4,7 @@ import type { DateTimeComboPicker } from '../src/date-time-combo-picker.js';
 import type { DtcpOverlayContent } from '../src/dtcp-overlay-content.js';
 
 async function openedPicker(value = '2026-07-15T13:05:00'): Promise<DateTimeComboPicker> {
-  const picker = await fixture<DateTimeComboPicker>(html`<date-time-combo-picker></date-time-combo-picker>`);
+  const picker = await fixture<DateTimeComboPicker>(html`<date-time-combo-picker auto-apply></date-time-combo-picker>`);
   await nextFrame();
   picker.value = value;
   picker.open();

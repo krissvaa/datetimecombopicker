@@ -35,6 +35,10 @@ export interface DtcpI18n {
   formatTitle: (monthName: string, fullYear: number) => string;
   prevMonth: string;
   nextMonth: string;
+  /** Label of the Date tab in the fullscreen tabbed layout. */
+  dateTab: string;
+  /** Label of the Time tab in the fullscreen tabbed layout. */
+  timeTab: string;
   hours: string;
   minutes: string;
   seconds: string;
@@ -78,6 +82,8 @@ export const DEFAULT_I18N: DtcpI18n = {
   formatTitle: (monthName, fullYear) => `${monthName} ${fullYear}`,
   prevMonth: 'Previous month',
   nextMonth: 'Next month',
+  dateTab: 'Date',
+  timeTab: 'Time',
   hours: 'Hours',
   minutes: 'Minutes',
   seconds: 'Seconds',
@@ -102,7 +108,9 @@ interface MonthCalendarElement extends HTMLElement {
 /**
  * `<dtcp-overlay-content>` lays out the month calendar and the time columns
  * side by side inside the `<date-time-combo-picker>` popup, with an
- * alternative year-grid view for fast year navigation.
+ * alternative year-grid view for fast year navigation. In fullscreen mode
+ * with `mobileTabs`, the sections are shown one at a time behind Date/Time
+ * tabs with the formatted value above.
  * An internal element, not intended to be used separately.
  *
  * @fires date-selected - `detail.date` is the selected `Date`.
@@ -124,10 +132,17 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
   declare steps: TimeSteps;
   declare referenceTime: TimeValue | null;
   declare showActions: boolean;
+  declare okButtonHidden: boolean;
+  declare cancelButtonHidden: boolean;
   declare timeView: TimeViewKind;
   declare autoAdvanceDisabled: boolean;
+  declare autoAdvanceDelay: number;
+  declare fullscreen: boolean;
+  declare mobileTabs: boolean;
+  declare headerText: string;
   declare _displayedMonth: Date;
   declare _yearViewOpen: boolean;
+  declare _activeTab: 'date' | 'time';
 
   static get is() {
     return 'dtcp-overlay-content';
@@ -197,6 +212,16 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
         type: Boolean,
       },
 
+      /** Hides the OK button of the action bar. */
+      okButtonHidden: {
+        type: Boolean,
+      },
+
+      /** Hides the Cancel button of the action bar. */
+      cancelButtonHidden: {
+        type: Boolean,
+      },
+
       /** The time selector to render: scroll columns or an analog clock. */
       timeView: {
         type: String,
@@ -207,6 +232,31 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
         type: Boolean,
       },
 
+      /** Delay in milliseconds before the analog clock auto-advances. */
+      autoAdvanceDelay: {
+        type: Number,
+      },
+
+      /** Whether the popup is in fullscreen (mobile bottom sheet) mode. */
+      fullscreen: {
+        type: Boolean,
+        reflectToAttribute: true,
+      },
+
+      /**
+       * When true and both a date and a time part exist, the fullscreen
+       * layout shows Date/Time tabs (one section at a time) instead of
+       * stacking the calendar above the time selector.
+       */
+      mobileTabs: {
+        type: Boolean,
+      },
+
+      /** The formatted value shown above the tabs while choosing. */
+      headerText: {
+        type: String,
+      },
+
       /** @protected */
       _displayedMonth: {
         type: Object,
@@ -215,6 +265,11 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       /** @protected */
       _yearViewOpen: {
         type: Boolean,
+      },
+
+      /** @protected */
+      _activeTab: {
+        type: String,
       },
     };
   }
@@ -237,10 +292,37 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
         overflow: hidden;
       }
 
-      [part='action-bar'] {
+      [part='tabs-header'] {
+        flex: none;
+        text-align: center;
+      }
+
+      [part='tabs'] {
         display: flex;
         flex: none;
-        justify-content: flex-end;
+      }
+
+      [part~='tab'] {
+        flex: 1 1 0;
+        appearance: none;
+        border: 0;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+
+      [part='action-bar'] {
+        display: flex;
+        align-items: center;
+        flex: none;
+      }
+
+      /* Pushes the Cancel/OK buttons to the end, past any slotted content */
+      [part='action-bar-spacer'] {
+        flex: 1 1 auto;
       }
 
       [part$='-action-button'] {
@@ -306,6 +388,13 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
         flex: auto;
       }
 
+      /* In the fixed-height fullscreen section, don't stretch the calendar:
+         stretching parks the leftover space between the last week row and
+         the Today button */
+      :host([fullscreen]) dtcp-month-calendar {
+        flex: none;
+      }
+
       /* The month calendar renders its own (redundant) title */
       dtcp-month-calendar::part(month-header) {
         position: absolute;
@@ -355,8 +444,15 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     this.steps = { hours: 1, minutes: 1, seconds: 1 };
     this.referenceTime = null;
     this.showActions = false;
+    this.okButtonHidden = false;
+    this.cancelButtonHidden = false;
     this.timeView = 'columns';
     this.autoAdvanceDisabled = false;
+    this.autoAdvanceDelay = 300;
+    this.fullscreen = false;
+    this.mobileTabs = false;
+    this.headerText = '';
+    this._activeTab = 'date';
     this.timeConfig = {
       hasDate: true,
       hasTime: true,
@@ -376,15 +472,51 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     this._yearViewOpen = false;
   }
 
+  /** Whether the fullscreen Date/Time tabs are in effect. @private */
+  __tabsActive(): boolean {
+    return this.fullscreen && this.mobileTabs && this.timeConfig.hasDate && this.timeConfig.hasTime;
+  }
+
+  /** @protected */
+  updated(changedProperties: Map<string, unknown>) {
+    super.updated(changedProperties);
+    // Styling hook for the tabbed fullscreen layout
+    this.toggleAttribute('tabs', this.__tabsActive());
+  }
+
   /** @protected */
   render() {
     const config = this.timeConfig;
     const month = this._displayedMonth;
     const title = this.i18n.formatTitle(this.i18n.monthNames[month.getMonth()], month.getFullYear());
+    const tabs = this.__tabsActive();
 
     return html`
+      ${tabs
+        ? html`
+            <div part="tabs-header">${this.headerText}</div>
+            <div part="tabs" role="tablist">
+              <button
+                part="tab date-tab ${this._activeTab === 'date' ? 'tab-selected' : ''}"
+                role="tab"
+                aria-selected="${String(this._activeTab === 'date')}"
+                @click="${() => this.__setActiveTab('date')}"
+              >
+                ${this.i18n.dateTab}
+              </button>
+              <button
+                part="tab time-tab ${this._activeTab === 'time' ? 'tab-selected' : ''}"
+                role="tab"
+                aria-selected="${String(this._activeTab === 'time')}"
+                @click="${() => this.__setActiveTab('time')}"
+              >
+                ${this.i18n.timeTab}
+              </button>
+            </div>
+          `
+        : nothing}
       <div part="main">
-      <div part="calendar-section" ?hidden="${!config.hasDate}">
+      <div part="calendar-section" ?hidden="${!config.hasDate || (tabs && this._activeTab !== 'date')}">
         <div part="calendar-header">
           <button
             part="prev-month-button"
@@ -447,7 +579,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
               </div>
             `}
       </div>
-      <div part="time-section" ?hidden="${!config.hasTime}">
+      <div part="time-section" ?hidden="${!config.hasTime || (tabs && this._activeTab !== 'time')}">
         ${this.timeView === 'clock'
           ? html`
               <dtcp-time-clock
@@ -456,6 +588,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
                 .steps="${this.steps}"
                 .fallbackValue="${this.referenceTime ?? { hours: 0, minutes: 0, seconds: 0 }}"
                 .autoAdvanceDisabled="${this.autoAdvanceDisabled}"
+                .autoAdvanceDelay="${this.autoAdvanceDelay}"
                 .i18n="${this.__timeI18n()}"
                 @time-changed="${this.__onTimeChanged}"
               ></dtcp-time-clock>
@@ -473,8 +606,14 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       </div>
       </div>
       <div part="action-bar" ?hidden="${!this.showActions}">
-        <button part="cancel-action-button" @click="${this.__onCancelClick}">${this.i18n.cancel}</button>
-        <button part="ok-action-button" @click="${this.__onOkClick}">${this.i18n.ok}</button>
+        <slot name="action-bar"></slot>
+        <div part="action-bar-spacer"></div>
+        <button part="cancel-action-button" ?hidden="${this.cancelButtonHidden}" @click="${this.__onCancelClick}">
+          ${this.i18n.cancel}
+        </button>
+        <button part="ok-action-button" ?hidden="${this.okButtonHidden}" @click="${this.__onOkClick}">
+          ${this.i18n.ok}
+        </button>
       </div>
       ${nothing}
     `;
@@ -498,6 +637,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     // date boundaries, so a carried time-of-day would reject boundary days
     this.focusedDate = this.__normalize(position);
     this._yearViewOpen = false;
+    this._activeTab = 'date';
     const columns = this.shadowRoot!.querySelector<TimeColumns>('dtcp-time-columns');
     if (columns) {
       requestAnimationFrame(() => columns.scrollToValue(true));
@@ -668,9 +808,24 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     await this.focusDateCell();
   }
 
+  /** Switches the fullscreen tab, restoring the time selector's scroll state. @private */
+  __setActiveTab(tab: 'date' | 'time') {
+    this._activeTab = tab;
+    if (tab === 'time') {
+      // The columns could not scroll while hidden (display: none)
+      requestAnimationFrame(() => {
+        this.shadowRoot!.querySelector<TimeColumns>('dtcp-time-columns')?.scrollToValue(true);
+      });
+    }
+  }
+
   /** @private */
   __onDateTap(event: CustomEvent<{ date: Date }>) {
     this.dispatchEvent(new CustomEvent('date-selected', { detail: { date: event.detail.date } }));
+    if (this.__tabsActive()) {
+      // Like the Material mobile picker: continue with the time selection
+      this.__setActiveTab('time');
+    }
   }
 
   /** @private */

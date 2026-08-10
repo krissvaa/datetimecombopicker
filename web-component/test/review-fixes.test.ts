@@ -66,7 +66,7 @@ describe('overlay outside-click ownership', () => {
 describe('keyboard selection on range boundaries', () => {
   it('selects the max-boundary day with Enter when the value has a time', async () => {
     const picker = await pickerFixture(
-      html`<date-time-combo-picker min="2026-07-01T00:00" max="2026-07-31T23:59"></date-time-combo-picker>`,
+      html`<date-time-combo-picker auto-apply min="2026-07-01T00:00" max="2026-07-31T23:59"></date-time-combo-picker>`,
     );
     picker.value = '2026-07-15T13:05:00';
     await open(picker);

@@ -39,13 +39,14 @@ displayed and parsed in the field *and* which parts the popup offers:
 | `dd.MM.yyyy` | `30.07.2026` | calendar only (closes on selection) |
 | `HH:mm:ss` | `13:05:42` | time selector only |
 
-**Commit semantics.** Selections in the popup apply to the value immediately by
-default: picking a date keeps the current time, picking a time keeps the current
-date. When nothing is selected yet, the missing parts default to the
+**Commit semantics.** By default, selections in the popup are staged behind an
+OK/Cancel action bar: picking a date keeps the current time, picking a time
+keeps the current date, and only OK applies the staged value. When nothing is
+selected yet, the missing parts default to the
 [initial position](#initialposition--reference-date) (or today / 00:00). Typed
 text commits on <kbd>Enter</kbd> or blur through the format parser. With
-[`autoApply` disabled](#action-bar-autoapply), selections are staged behind an
-OK/Cancel action bar instead.
+[`autoApply` enabled](#action-bar-autoapply), selections apply to the value
+immediately and the action bar is hidden.
 
 ## Using with Vaadin Flow
 
@@ -131,10 +132,14 @@ Java method ↔ element property/attribute:
 | `setMin` / `setMax` | `min` / `max` | none | Allowed range, inclusive; see [Validation](#validation) |
 | `setTimeView(TimeView)` | `time-view` | `columns` | `columns` or `clock` — see below |
 | `setAutoAdvance(boolean)` | `auto-advance-disabled` (inverted) | advance | Clock only: advance hours → minutes → seconds after selecting |
+| `setAutoAdvanceDelay(int)` | `auto-advance-delay` | 300 | Clock only: ms pause before auto-advancing (`0` = immediate) |
+| `setMobileTabs(boolean)` | `mobile-tabs-disabled` (inverted) | tabs | Fullscreen only: Date/Time tabs with a formatted-value header — see [Mobile behavior](#mobile-behavior) |
 | `setHourStep` / `setMinuteStep` / `setSecondStep` | `hour-step` / `minute-step` / `second-step` | 1 | Interval between selectable values; steps that divide 24/60 evenly produce uniform columns |
 | `setDateDisabledFunction(String)` | `isDateDisabled` (function) | none | Disable individual dates — see below |
 | `setInitialPosition(LocalDateTime)` | `initial-position` | none | See below |
-| `setAutoApply(boolean)` | `auto-apply` | `true` | See [Action bar](#action-bar-autoapply) |
+| `setAutoApply(boolean)` | `auto-apply` | `false` | See [Action bar](#action-bar-autoapply) |
+| `setOkButtonVisible` / `setCancelButtonVisible` | `ok-button-hidden` / `cancel-button-hidden` (inverted) | visible | Hide a default action-bar button |
+| `addToActionBar(Component...)` | `slot="action-bar"` | — | Custom content at the start of the action bar |
 | `setAutoOpen(boolean)` | `auto-open-disabled` (inverted) | open | Whether clicking/typing in the field opens the popup |
 | `setOpened(boolean)` | `opened` | `false` | Programmatic popup control |
 | `setClearButtonVisible(boolean)` | `clear-button-visible` | `false` | Clear button in the field |
@@ -150,7 +155,9 @@ Java method ↔ element property/attribute:
   drag the hand; 24h mode uses a double ring (outer 1–12, inner 13–00). A
   digital readout above the dial switches between the hour/minute/second
   views; after a selection the next view opens automatically unless
-  auto-advance is disabled.
+  auto-advance is disabled (`setAutoAdvance(false)`). The 300 ms pause
+  before advancing — there so the selection registers visually — can be
+  tuned with `setAutoAdvanceDelay(int)`.
 
 ### Disabling dates
 
@@ -181,11 +188,20 @@ an hour completes the value with its date and minutes.
 
 ### Action bar (`autoApply`)
 
-`setAutoApply(false)` switches to staged selection: picking dates and times
-only updates the popup preview; **OK** applies the staged value and closes,
-while **Cancel**, <kbd>Escape</kbd> or clicking outside discards it. Button
-labels come from i18n (`ok`, `cancel`). Typed text still commits directly on
-<kbd>Enter</kbd>.
+By default the popup stages selections: picking dates and times only updates
+the popup preview; **OK** applies the staged value and closes, while
+**Cancel**, <kbd>Escape</kbd> or clicking outside discards it. Button labels
+come from i18n (`ok`, `cancel`). Typed text still commits directly on
+<kbd>Enter</kbd>. `setAutoApply(true)` applies every selection immediately
+and hides the action bar.
+
+The action bar is customizable: `addToActionBar(new Button("Now", e -> ...))`
+places components at its start, before the Cancel/OK buttons
+(`removeFromActionBar` takes them out again), and the default buttons can be
+hidden individually with `setOkButtonVisible(false)` /
+`setCancelButtonVisible(false)`. In plain HTML, use
+`<button slot="action-bar">` and the `ok-button-hidden` /
+`cancel-button-hidden` attributes.
 
 ## Validation
 
@@ -288,8 +304,16 @@ The analog clock face is a slider per view: arrows adjust by one step,
 ## Mobile behavior
 
 On viewports at most 450px wide (or high), the popup becomes a fullscreen
-bottom sheet with a backdrop; the calendar stacks above a centered time
-selector. This is automatic (a media query), with no configuration.
+bottom sheet with a backdrop. This is automatic (a media query), with no
+configuration.
+
+When the format has both a date and a time part, the sheet shows Date/Time
+tabs with one section at a time — selecting a day moves on to the Time tab,
+like the Material mobile picker — and the value is shown above the tabs in
+the field's format while choosing (the format pattern itself while empty).
+The tab labels localize via `i18n.setDateTab(...)` / `i18n.setTimeTab(...)`.
+`setMobileTabs(false)` (`mobile-tabs-disabled`) switches to the stacked
+layout instead: the calendar above a centered time selector.
 
 ## Styling
 

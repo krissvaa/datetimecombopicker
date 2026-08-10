@@ -177,12 +177,40 @@ class DateTimeComboPickerTest {
     }
 
     @Test
-    void autoApply_roundTrip() {
+    void autoApply_disabledByDefault_roundTrip() {
         DateTimeComboPicker picker = new DateTimeComboPicker();
-        assertTrue(picker.isAutoApply());
-        picker.setAutoApply(false);
         assertFalse(picker.isAutoApply());
-        assertFalse(picker.getElement().getProperty("autoApply", true));
+        picker.setAutoApply(true);
+        assertTrue(picker.isAutoApply());
+        assertTrue(picker.getElement().getProperty("autoApply", false));
+    }
+
+    @Test
+    void actionBarButtons_visibleByDefault_mapToInvertedProperties() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        assertTrue(picker.isOkButtonVisible());
+        assertTrue(picker.isCancelButtonVisible());
+        picker.setOkButtonVisible(false);
+        picker.setCancelButtonVisible(false);
+        assertFalse(picker.isOkButtonVisible());
+        assertFalse(picker.isCancelButtonVisible());
+        assertTrue(picker.getElement().getProperty("okButtonHidden", false));
+        assertTrue(picker.getElement().getProperty("cancelButtonHidden",
+                false));
+    }
+
+    @Test
+    void addToActionBar_slotsAndRemoves() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        var button = new com.vaadin.flow.component.html.NativeButton("Now");
+        picker.addToActionBar(button);
+        assertEquals("action-bar",
+                button.getElement().getAttribute("slot"));
+        assertEquals(picker.getElement(),
+                button.getElement().getParent());
+        picker.removeFromActionBar(button);
+        org.junit.jupiter.api.Assertions
+                .assertNull(button.getElement().getParent());
     }
 
     @Test
@@ -208,13 +236,36 @@ class DateTimeComboPickerTest {
     }
 
     @Test
-    void autoAdvance_mapsToInvertedProperty() {
+    void autoAdvance_enabledByDefault_mapsToInvertedProperty() {
         DateTimeComboPicker picker = new DateTimeComboPicker();
         assertTrue(picker.isAutoAdvance());
         picker.setAutoAdvance(false);
         assertFalse(picker.isAutoAdvance());
         assertTrue(picker.getElement().getProperty("autoAdvanceDisabled",
                 false));
+    }
+
+    @Test
+    void mobileTabs_enabledByDefault_mapsToInvertedProperty() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        assertTrue(picker.isMobileTabs());
+        picker.setMobileTabs(false);
+        assertFalse(picker.isMobileTabs());
+        assertTrue(picker.getElement().getProperty("mobileTabsDisabled",
+                false));
+    }
+
+    @Test
+    void autoAdvanceDelay_defaults300_rejectsNegative() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        assertEquals(300, picker.getAutoAdvanceDelay());
+        picker.setAutoAdvanceDelay(0);
+        assertEquals(0, picker.getAutoAdvanceDelay());
+        assertEquals(0,
+                picker.getElement().getProperty("autoAdvanceDelay", -1));
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> picker.setAutoAdvanceDelay(-1));
     }
 
     @Test

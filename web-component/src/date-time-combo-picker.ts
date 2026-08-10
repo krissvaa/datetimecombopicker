@@ -71,15 +71,21 @@ const FULLSCREEN_MEDIA_QUERY = '(max-width: 450px), (max-height: 450px)';
  * `min` / `max` (`min`/`max`) | Earliest / latest allowed value (ISO string) | `null`
  * `timeView` (`time-view`) | Time selector: `columns` or `clock` (analog dial) | `columns`
  * `autoAdvanceDisabled` (`auto-advance-disabled`) | Clock only: don't auto-advance to the next view after selecting | `false`
+ * `autoAdvanceDelay` (`auto-advance-delay`) | Clock only: milliseconds before auto-advancing | `300`
+ * `mobileTabsDisabled` (`mobile-tabs-disabled`) | Fullscreen only: stack the calendar above the time selector instead of the default Date/Time tabs | `false`
  * `hourStep` / `minuteStep` / `secondStep` | Interval between selectable time values | `1`
  * `isDateDisabled` | `({day, month, year}) => boolean` (0-based month) disabling dates | -
  * `initialPosition` (`initial-position`) | ISO date(-time) shown and used as defaults when empty | -
- * `autoApply` (`auto-apply`) | `false` stages selections behind an OK/Cancel action bar | `true`
+ * `autoApply` (`auto-apply`) | `true` applies selections immediately without the OK/Cancel action bar | `false`
+ * `okButtonHidden` / `cancelButtonHidden` (`ok-button-hidden`/`cancel-button-hidden`) | Hide a default action-bar button | `false`
  * `opened` (`opened`) | Whether the popup is open | `false`
  * `autoOpenDisabled` (`auto-open-disabled`) | Only open the popup from the toggle button | `false`
  * `showWeekNumbers` (`show-week-numbers`) | ISO week numbers (requires `firstDayOfWeek: 1`) | `false`
  * `i18n` | Localization object (month/weekday names, labels, `firstDayOfWeek`) | English
  * `label`, `placeholder`, `helperText`, `errorMessage`, `required`, `disabled`, `readonly`, `clearButtonVisible`, `invalid` | Standard Vaadin field properties | -
+ *
+ * Content with `slot="action-bar"` is placed at the start of the popup's
+ * OK/Cancel action bar (e.g. a custom "Now" button).
  *
  * On viewports narrower than 450px the popup becomes a fullscreen
  * bottom sheet with a backdrop.
@@ -104,8 +110,12 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   declare isDateDisabled: IsDateDisabledFn | undefined;
   declare initialPosition: string | null;
   declare autoApply: boolean;
+  declare okButtonHidden: boolean;
+  declare cancelButtonHidden: boolean;
   declare timeView: TimeViewKind;
   declare autoAdvanceDisabled: boolean;
+  declare autoAdvanceDelay: number;
+  declare mobileTabsDisabled: boolean;
   declare _fullscreen: boolean;
   declare _stagedParts: DateTimeParts | null;
   declare _timeConfig: TimeConfig;
@@ -235,13 +245,28 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       },
 
       /**
-       * When true (default), selections in the popup are applied to the value
-       * immediately. When false, selections are staged and the popup shows a
-       * Cancel/OK action bar; only OK applies the staged selection.
+       * When false (default), selections are staged and the popup shows a
+       * Cancel/OK action bar; only OK applies the staged selection. When
+       * true, selections in the popup are applied to the value immediately
+       * and the action bar is hidden.
        */
       autoApply: {
         type: Boolean,
-        value: true,
+        value: false,
+        sync: true,
+      },
+
+      /** Hides the OK button of the action bar. */
+      okButtonHidden: {
+        type: Boolean,
+        value: false,
+        sync: true,
+      },
+
+      /** Hides the Cancel button of the action bar. */
+      cancelButtonHidden: {
+        type: Boolean,
+        value: false,
         sync: true,
       },
 
@@ -263,6 +288,29 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
        * Only applies when `timeView` is `clock`.
        */
       autoAdvanceDisabled: {
+        type: Boolean,
+        value: false,
+        sync: true,
+      },
+
+      /**
+       * Delay in milliseconds before the analog clock auto-advances to the
+       * next view after a selection, giving the selection time to register
+       * visually. `0` advances immediately. Only applies when `timeView` is
+       * `clock` and auto-advance is enabled.
+       */
+      autoAdvanceDelay: {
+        type: Number,
+        value: 300,
+        sync: true,
+      },
+
+      /**
+       * When true, the fullscreen (mobile) popup stacks the calendar above
+       * the time selector instead of the default Date/Time tabbed layout
+       * (one section at a time, with the formatted value above the tabs).
+       */
+      mobileTabsDisabled: {
         type: Boolean,
         value: false,
         sync: true,
@@ -295,6 +343,13 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     return [
       inputFieldShared,
       css`
+        /* Wider default than the shared 12em: a date-time value (e.g.
+           "15.07.2026 03:37") doesn't fit a single-field width. Apps
+           setting --vaadin-field-default-width still control it. */
+        .date-time-combo-picker-container {
+          width: var(--vaadin-field-default-width, 14em);
+        }
+
         [part~='toggle-button'] {
           cursor: pointer;
         }
@@ -356,7 +411,9 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       >
         <dtcp-overlay-content
           id="overlayContent"
-          ?fullscreen="${this._fullscreen}"
+          .fullscreen="${this._fullscreen}"
+          .mobileTabs="${!this.mobileTabsDisabled}"
+          .headerText="${this.__overlayHeaderText()}"
           .selectedDate="${this.__selectedDate()}"
           .timeValue="${this.__timeValue()}"
           .timeConfig="${this._timeConfig}"
@@ -367,8 +424,11 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
           .steps="${{ hours: this.hourStep, minutes: this.minuteStep, seconds: this.secondStep }}"
           .referenceTime="${this.__referenceTime()}"
           .showActions="${!this.autoApply}"
+          .okButtonHidden="${this.okButtonHidden}"
+          .cancelButtonHidden="${this.cancelButtonHidden}"
           .timeView="${this.timeView}"
           .autoAdvanceDisabled="${this.autoAdvanceDisabled}"
+          .autoAdvanceDelay="${this.autoAdvanceDelay}"
           .initialPosition="${this.__initialPositionDate()}"
           .showWeekNumbers="${this.showWeekNumbers}"
           @date-selected="${this.__onDateSelected}"
@@ -423,6 +483,13 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
         (this as any)._setFocused(false);
       }
     });
+
+    // Children with slot="action-bar" are re-parented into the overlay
+    // content while the popup is open: a forwarding <slot> chain would
+    // break when the overlay teleports itself to <body>. They return to
+    // this element's light DOM on close, so document-level queries keep
+    // finding them. Late additions while open are adopted by the observer.
+    new MutationObserver(() => this.__adoptActionBarContent()).observe(this, { childList: true });
 
     // Popup semantics for assistive technology
     this.inputElement.setAttribute('role', 'combobox');
@@ -729,6 +796,29 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       this._stagedParts = null;
       this.__requestValidation();
     }
+    this.__adoptActionBarContent();
+  }
+
+  /**
+   * Moves `slot="action-bar"` children into the overlay content while the
+   * popup is open (slots cannot forward into the teleported overlay) and
+   * back into this element's light DOM when it closes.
+   * @private
+   */
+  __adoptActionBarContent() {
+    const content = this.$ && (this.$.overlayContent as HTMLElement);
+    if (!content) {
+      return;
+    }
+    if (this.opened) {
+      [...this.children]
+        .filter((child) => child.getAttribute('slot') === 'action-bar')
+        .forEach((child) => content.appendChild(child));
+    } else {
+      [...content.children]
+        .filter((child) => child.getAttribute('slot') === 'action-bar')
+        .forEach((child) => this.appendChild(child));
+    }
   }
 
   /**
@@ -912,6 +1002,17 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       this.dispatchEvent(new CustomEvent('change', { bubbles: true }));
     }
     this.__requestValidation();
+  }
+
+  /**
+   * The text shown above the fullscreen Date/Time tabs: the value being
+   * chosen (staged or committed), formatted with the field's format;
+   * the format pattern itself while nothing is selected yet.
+   * @private
+   */
+  __overlayHeaderText(): string {
+    const parts = this.__currentParts();
+    return parts ? formatDateTime(this.__tokens, parts, this.__meridiems()) : this.format;
   }
 
   /** @private */

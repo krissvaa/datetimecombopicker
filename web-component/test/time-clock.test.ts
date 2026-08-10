@@ -4,7 +4,7 @@ import type { DateTimeComboPicker } from '../src/date-time-combo-picker.js';
 import type { DtcpOverlayContent } from '../src/dtcp-overlay-content.js';
 import type { TimeClock } from '../src/dtcp-time-clock.js';
 
-async function openedPicker(template = html`<date-time-combo-picker time-view="clock"></date-time-combo-picker>`) {
+async function openedPicker(template = html`<date-time-combo-picker auto-apply time-view="clock"></date-time-combo-picker>`) {
   const picker = await fixture<DateTimeComboPicker>(template);
   await nextFrame();
   picker.open();
@@ -55,7 +55,7 @@ describe('dtcp-time-clock', () => {
 
   it('renders a single 12-number ring in 12h mode', async () => {
     const picker = await openedPicker(
-      html`<date-time-combo-picker time-view="clock" format="M/d/yyyy h:mm a"></date-time-combo-picker>`,
+      html`<date-time-combo-picker auto-apply time-view="clock" format="M/d/yyyy h:mm a"></date-time-combo-picker>`,
     );
     const numbers = clock(picker).shadowRoot!.querySelectorAll('[part~="clock-number"]');
     expect(numbers.length).to.equal(12);
@@ -91,9 +91,22 @@ describe('dtcp-time-clock', () => {
     expect((clock(picker) as any)._activeView).to.equal('minutes');
   });
 
+  it('advances immediately with auto-advance-delay 0', async () => {
+    const picker = await openedPicker(
+      html`<date-time-combo-picker auto-apply time-view="clock" auto-advance-delay="0"></date-time-combo-picker>`,
+    );
+    picker.value = '2026-07-15T00:00:00';
+    await nextFrame();
+    tapFace(picker, 90);
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+    expect((clock(picker) as any)._activeView).to.equal('minutes');
+  });
+
   it('stays on the hours view when auto-advance is disabled', async () => {
     const picker = await openedPicker(
-      html`<date-time-combo-picker time-view="clock" auto-advance-disabled></date-time-combo-picker>`,
+      html`<date-time-combo-picker auto-apply time-view="clock" auto-advance-disabled></date-time-combo-picker>`,
     );
     picker.value = '2026-07-15T00:00:00';
     await nextFrame();
@@ -128,7 +141,7 @@ describe('dtcp-time-clock', () => {
 
   it('toggles AM/PM from the readout', async () => {
     const picker = await openedPicker(
-      html`<date-time-combo-picker time-view="clock" format="M/d/yyyy h:mm a"></date-time-combo-picker>`,
+      html`<date-time-combo-picker auto-apply time-view="clock" format="M/d/yyyy h:mm a"></date-time-combo-picker>`,
     );
     picker.value = '2026-07-15T03:00:00';
     await nextFrame();
@@ -154,7 +167,7 @@ describe('dtcp-time-clock', () => {
 
   it('respects minute steps', async () => {
     const picker = await openedPicker(
-      html`<date-time-combo-picker time-view="clock" minute-step="15"></date-time-combo-picker>`,
+      html`<date-time-combo-picker auto-apply time-view="clock" minute-step="15"></date-time-combo-picker>`,
     );
     picker.value = '2026-07-15T03:00:00';
     await nextFrame();
@@ -173,6 +186,7 @@ describe('dtcp-time-clock', () => {
   it('uses the reference time for unchosen parts on the first selection', async () => {
     const picker = await openedPicker(
       html`<date-time-combo-picker
+        auto-apply
         time-view="clock"
         initial-position="2030-01-15T12:30:00"
       ></date-time-combo-picker>`,
@@ -180,6 +194,30 @@ describe('dtcp-time-clock', () => {
     tapFace(picker, 270); // 9 o'clock, outer ring -> hour 9
     await nextFrame();
     expect(picker.value).to.equal('2030-01-15T09:30:00');
+  });
+
+  it('shows the pointed value inside the hand thumb when it has no dial number', async () => {
+    const picker = await openedPicker();
+    picker.value = '2026-07-15T03:37:00';
+    await nextFrame();
+    const c = clock(picker);
+    (c as any)._activeView = 'minutes';
+    await nextFrame();
+    const label = c.shadowRoot!.querySelector('[part="clock-hand-label"]');
+    expect(label).to.not.be.null;
+    expect(label!.textContent!.trim()).to.equal('37');
+  });
+
+  it('shows the value inside the hand thumb for on-label values too', async () => {
+    const picker = await openedPicker();
+    picker.value = '2026-07-15T03:35:00';
+    await nextFrame();
+    const c = clock(picker);
+    (c as any)._activeView = 'minutes';
+    await nextFrame();
+    const label = c.shadowRoot!.querySelector('[part="clock-hand-label"]');
+    expect(label).to.not.be.null;
+    expect(label!.textContent!.trim()).to.equal('35');
   });
 
   it('resets to the hours view when the overlay reopens', async () => {

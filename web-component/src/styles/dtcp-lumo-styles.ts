@@ -84,6 +84,17 @@ registerStyles(
         margin: 0;
         border-radius: var(--lumo-border-radius-l) var(--lumo-border-radius-l) 0 0;
       }
+
+      /* Scroll inside the sheet when the content is taller than the 80vh cap
+         (e.g. the analog clock on a short viewport). No menu-overlay padding
+         or edge-fade mask: the sheet sections bring their own spacing, and
+         the mask would wash out the header/action bar at the edges. */
+      :host([fullscreen]) [part='content'] {
+        overflow-y: auto;
+        padding: 0;
+        -webkit-mask-image: none;
+        mask-image: none;
+      }
     `,
   ],
   { moduleId: 'lumo-dtcp-overlay' },
@@ -147,12 +158,79 @@ registerStyles(
 
     :host([fullscreen]) [part='calendar-section'] {
       margin-inline: auto;
+      /* Fixed height (like the desktop popup) so 5- and 6-row months don't
+         resize the sheet, keeping the prev/next buttons in place. The extra
+         bottom padding keeps the Today button off the sheet/action-bar edge. */
+      height: calc(var(--lumo-size-m) * 9.5 + 12px);
+      padding-bottom: 20px;
     }
 
     :host([fullscreen]) [part='time-section'] {
-      border-inline-start: none;
-      border-top: 1px solid var(--lumo-contrast-10pct);
       height: calc(var(--lumo-size-s) * 5);
+    }
+
+    /* Calendar/time separator; none needed for time-only formats */
+    :host([fullscreen]) [part='calendar-section']:not([hidden]) + [part='time-section'] {
+      border-top: 1px solid var(--lumo-contrast-10pct);
+    }
+
+    /* The clock sizes itself; the fixed height above is for the columns */
+    :host([fullscreen]) [part='time-section']:has(dtcp-time-clock) {
+      height: auto;
+    }
+
+    /* Tabbed fullscreen layout: formatted-value header, Date/Time tabs,
+       one section at a time inside a fixed-height main */
+    [part='tabs-header'] {
+      /* 16px padding + the font's ~4px leading = ~20px visual gap */
+      padding: var(--lumo-space-m) var(--lumo-space-m);
+      font-size: var(--lumo-font-size-xl);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--lumo-header-text-color);
+    }
+
+    [part~='tab'] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--lumo-space-xs);
+      height: var(--lumo-size-m);
+      font-size: var(--lumo-font-size-s);
+      font-weight: 500;
+      color: var(--lumo-secondary-text-color);
+      cursor: var(--lumo-clickable-cursor);
+      border-bottom: 2px solid var(--lumo-contrast-10pct);
+    }
+
+    [part~='tab']::before {
+      font-family: 'lumo-icons';
+      font-size: var(--lumo-icon-size-m);
+      line-height: 1;
+    }
+
+    [part~='date-tab']::before {
+      content: var(--lumo-icons-calendar);
+    }
+
+    [part~='time-tab']::before {
+      content: var(--lumo-icons-clock);
+    }
+
+    [part~='tab-selected'] {
+      color: var(--lumo-primary-text-color);
+      border-bottom-color: var(--vaadin-selection-color, var(--lumo-primary-color));
+    }
+
+    :host([fullscreen][tabs]) [part='main'] {
+      /* Both tab panels use the calendar's fixed height so switching
+         tabs does not resize the sheet */
+      height: calc(var(--lumo-size-m) * 9.5 + 12px);
+    }
+
+    :host([fullscreen][tabs]) [part='time-section'] {
+      height: 100%;
+      align-items: center;
     }
 
     [part='calendar-section'] {
@@ -226,10 +304,14 @@ registerStyles(
     }
 
     [part$='month-button'] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       width: var(--lumo-size-s);
       height: var(--lumo-size-s);
       font-family: 'lumo-icons';
       font-size: var(--lumo-icon-size-m);
+      line-height: 1;
       color: var(--lumo-tertiary-text-color);
       border-radius: var(--lumo-border-radius-m);
       cursor: var(--lumo-clickable-cursor);
@@ -281,9 +363,13 @@ registerStyles(
     }
 
     [part='time-section'] {
-      border-inline-start: 1px solid var(--lumo-contrast-10pct);
       padding: var(--lumo-space-s) var(--lumo-space-xs);
       box-sizing: border-box;
+    }
+
+    /* Calendar/time separator; none needed for time-only formats */
+    :host(:not([fullscreen])) [part='calendar-section']:not([hidden]) + [part='time-section'] {
+      border-inline-start: 1px solid var(--lumo-contrast-10pct);
     }
   `,
   { moduleId: 'lumo-dtcp-overlay-content' },
@@ -304,6 +390,10 @@ registerStyles(
       --_dtcp-cell-height: var(--lumo-size-s);
       width: var(--lumo-size-l);
       padding: 0 calc(var(--lumo-space-xs) / 2);
+    }
+
+    [part='column'] + [part='column'] {
+      border-inline-start: 1px solid var(--lumo-contrast-10pct);
     }
 
     [part~='time-cell'] {
@@ -381,7 +471,6 @@ registerStyles(
       flex-direction: column;
       margin-inline-start: var(--lumo-space-s);
       gap: 2px;
-      vertical-align: middle;
     }
 
     [part~='meridiem-button'] {
@@ -438,7 +527,14 @@ registerStyles(
       width: var(--lumo-size-s);
       height: var(--lumo-size-s);
       background-color: var(--vaadin-selection-color, var(--lumo-primary-color));
-      opacity: 0.9;
+    }
+
+    [part='clock-hand-label'] {
+      width: var(--lumo-size-s);
+      height: var(--lumo-size-s);
+      font-size: var(--lumo-font-size-s);
+      font-variant-numeric: tabular-nums;
+      color: var(--lumo-primary-contrast-color);
     }
   `,
   { moduleId: 'lumo-dtcp-time-clock' },

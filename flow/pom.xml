@@ -201,6 +201,27 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <!-- Apache 2.0 requires redistributions to carry the
+                             license and NOTICE; bundle them into the jar. -->
+                        <id>copy-license</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/META-INF</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/..</directory>
+                                    <includes>
+                                        <include>LICENSE</include>
+                                        <include>NOTICE</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <!-- Copy for this project's own demo (dev and production
                              mode); the Vaadin build only scans META-INF/frontend
                              inside jars, not the project's target/classes.

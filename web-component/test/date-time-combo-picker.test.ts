@@ -2,7 +2,7 @@ import { expect, fixture, html, nextFrame, oneEvent } from '@open-wc/testing';
 import '../src/date-time-combo-picker-lumo.js';
 import type { DateTimeComboPicker } from '../src/date-time-combo-picker.js';
 
-async function pickerFixture(template = html`<date-time-combo-picker></date-time-combo-picker>`) {
+async function pickerFixture(template = html`<date-time-combo-picker auto-apply></date-time-combo-picker>`) {
   const picker = await fixture<DateTimeComboPicker>(template);
   await nextFrame();
   return picker;

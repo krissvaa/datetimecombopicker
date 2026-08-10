@@ -22,8 +22,8 @@ type ClockView = 'hours' | 'minutes' | 'seconds';
 const OUTER_RING_RATIO = 0.39;
 /** Fraction of the face width for the inner ring (13-00 in 24h mode). */
 const INNER_RING_RATIO = 0.26;
-/** Delay before advancing to the next view after a selection. */
-const VIEW_ADVANCE_DELAY = 300;
+/** Default delay before advancing to the next view after a selection. */
+const DEFAULT_VIEW_ADVANCE_DELAY = 300;
 
 const DEFAULT_CONFIG: TimeConfig = {
   hasDate: true,
@@ -48,7 +48,8 @@ interface ClockNumber {
  * `<dtcp-time-clock>` is an analog-clock alternative to `<dtcp-time-columns>`.
  * It shows one dial per time part (hours, minutes, seconds) with a digital
  * readout for switching between them, and advances automatically after each
- * selection. An internal element, not intended to be used separately.
+ * selection (unless `autoAdvanceDisabled` is set). An internal element, not
+ * intended to be used separately.
  *
  * @fires time-changed - Fired when the user selects a time part. `detail` is a {@link TimeValue}.
  */
@@ -59,6 +60,7 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
   declare steps: TimeSteps;
   declare i18n: TimeColumnsI18n;
   declare autoAdvanceDisabled: boolean;
+  declare autoAdvanceDelay: number;
   declare _activeView: ClockView;
   declare _dragValue: number | null;
 
@@ -104,6 +106,15 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
         type: Boolean,
       },
 
+      /**
+       * Delay in milliseconds before auto-advancing to the next view,
+       * giving the selection time to register visually. `0` advances
+       * immediately.
+       */
+      autoAdvanceDelay: {
+        type: Number,
+      },
+
       /** @protected */
       _activeView: {
         type: String,
@@ -127,7 +138,9 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
 
       [part='clock-readout'] {
         display: flex;
-        align-items: baseline;
+        /* All text shares one font, so centering keeps the digits aligned
+           and centers the (taller) stacked AM/PM toggle on them */
+        align-items: center;
         flex: none;
       }
 
@@ -179,6 +192,8 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
         transform-origin: center top;
         transform: translate(-50%, 0) rotate(calc(var(--_angle) + 180deg));
         pointer-events: none;
+        /* The thumb (and the number inside it) paints over the dial numbers */
+        z-index: 1;
       }
 
       [part='clock-hand']::before {
@@ -189,6 +204,17 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
         left: 50%;
         transform: translate(-50%, 50%);
         border-radius: 50%;
+      }
+
+      [part='clock-hand-label'] {
+        /* Counter-rotated so the number inside the thumb stays upright */
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: translate(-50%, 50%) rotate(calc(-180deg - var(--_angle)));
       }
 
       [part='clock-hand']::after {
@@ -217,6 +243,7 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
     this.fallbackValue = { hours: 0, minutes: 0, seconds: 0 };
     this.steps = { hours: 1, minutes: 1, seconds: 1 };
     this.autoAdvanceDisabled = false;
+    this.autoAdvanceDelay = DEFAULT_VIEW_ADVANCE_DELAY;
     this._activeView = 'hours';
     this._dragValue = null;
     this.i18n = {
@@ -250,7 +277,8 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
     const meridiemPm = display.hours >= 12;
     const numbers = this.__numbers();
     const handAngle = this.__handAngle();
-    const handInner = this.__isInnerValue(this.__activeValue());
+    const activeValue = this.__activeValue();
+    const handInner = this.__isInnerValue(activeValue);
 
     return html`
       <div part="clock-readout">
@@ -313,7 +341,9 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
             '--_angle': `${handAngle}deg`,
             '--_ring': String(handInner ? INNER_RING_RATIO : OUTER_RING_RATIO),
           })}"
-        ></div>
+        >
+          <div part="clock-hand-label">${this.__activeLabel()}</div>
+        </div>
         ${numbers.map((number) => {
           const selected = number.value === this.__activeValue();
           return html`
@@ -370,6 +400,15 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
     if (this._activeView === 'hours' && this.config.use12h) {
       const hour12 = value % 12 === 0 ? 12 : value % 12;
       return `${hour12} ${value >= 12 ? this.i18n.pm : this.i18n.am}`;
+    }
+    return String(value).padStart(2, '0');
+  }
+
+  /** The dial-style label of the active value, shown inside the hand thumb. @private */
+  __activeLabel(): string {
+    const value = this.__activeValue();
+    if (this._activeView === 'hours' && this.config.use12h) {
+      return String(value % 12 === 0 ? 12 : value % 12).padStart(2, '0');
     }
     return String(value).padStart(2, '0');
   }
@@ -542,9 +581,12 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
       const nextView = views[views.indexOf(this._activeView) + 1];
       if (nextView) {
         clearTimeout(this.__advanceTimer);
-        this.__advanceTimer = setTimeout(() => {
-          this._activeView = nextView;
-        }, VIEW_ADVANCE_DELAY);
+        this.__advanceTimer = setTimeout(
+          () => {
+            this._activeView = nextView;
+          },
+          Math.max(0, this.autoAdvanceDelay ?? DEFAULT_VIEW_ADVANCE_DELAY),
+        );
       }
     }
   }

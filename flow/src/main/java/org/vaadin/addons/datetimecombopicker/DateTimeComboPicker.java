@@ -23,6 +23,7 @@ import java.util.Objects;
 
 import com.vaadin.flow.component.AbstractSinglePropertyField;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Focusable;
 import com.vaadin.flow.component.HasHelper;
 import com.vaadin.flow.component.HasLabel;
@@ -442,10 +443,11 @@ public class DateTimeComboPicker
 
     /**
      * Sets whether selections in the popup are applied to the value
-     * immediately (the default). When set to {@code false}, selections are
-     * staged and the popup shows a Cancel/OK action bar; only pressing OK
-     * applies the staged selection, while Cancel, Escape or closing the
-     * popup discards it.
+     * immediately. By default this is disabled: selections are staged and
+     * the popup shows a Cancel/OK action bar; only pressing OK applies the
+     * staged selection, while Cancel, Escape or closing the popup discards
+     * it. When enabled, every selection updates the value directly and the
+     * action bar is hidden.
      *
      * @param autoApply
      *            {@code true} to apply selections immediately
@@ -460,7 +462,83 @@ public class DateTimeComboPicker
      * @return {@code true} if selections are applied immediately
      */
     public boolean isAutoApply() {
-        return getElement().getProperty("autoApply", true);
+        return getElement().getProperty("autoApply", false);
+    }
+
+    /**
+     * Sets whether the OK button of the action bar is visible. Visible by
+     * default. Hiding both default buttons leaves only content added with
+     * {@link #addToActionBar(Component...)}.
+     *
+     * @param okButtonVisible
+     *            {@code false} to hide the OK button
+     */
+    public void setOkButtonVisible(boolean okButtonVisible) {
+        getElement().setProperty("okButtonHidden", !okButtonVisible);
+    }
+
+    /**
+     * Gets whether the OK button of the action bar is visible.
+     *
+     * @return {@code true} if the OK button is visible
+     */
+    public boolean isOkButtonVisible() {
+        return !getElement().getProperty("okButtonHidden", false);
+    }
+
+    /**
+     * Sets whether the Cancel button of the action bar is visible. Visible
+     * by default.
+     *
+     * @param cancelButtonVisible
+     *            {@code false} to hide the Cancel button
+     */
+    public void setCancelButtonVisible(boolean cancelButtonVisible) {
+        getElement().setProperty("cancelButtonHidden", !cancelButtonVisible);
+    }
+
+    /**
+     * Gets whether the Cancel button of the action bar is visible.
+     *
+     * @return {@code true} if the Cancel button is visible
+     */
+    public boolean isCancelButtonVisible() {
+        return !getElement().getProperty("cancelButtonHidden", false);
+    }
+
+    /**
+     * Adds components to the start of the popup's action bar, before the
+     * Cancel/OK buttons (e.g. a "Now" shortcut button). Only visible while
+     * the action bar is shown, i.e. when auto-apply is disabled (the
+     * default). Remove components with
+     * {@link #removeFromActionBar(Component...)}.
+     *
+     * @param components
+     *            the components to add
+     */
+    public void addToActionBar(Component... components) {
+        for (Component component : components) {
+            component.getElement().setAttribute("slot", "action-bar");
+            getElement().appendChild(component.getElement());
+        }
+    }
+
+    /**
+     * Removes components added with {@link #addToActionBar(Component...)}.
+     *
+     * @param components
+     *            the components to remove
+     */
+    public void removeFromActionBar(Component... components) {
+        for (Component component : components) {
+            if ("action-bar"
+                    .equals(component.getElement().getAttribute("slot"))
+                    && getElement().equals(component.getElement()
+                            .getParent())) {
+                component.getElement().removeAttribute("slot");
+                getElement().removeChild(component.getElement());
+            }
+        }
     }
 
     /**
@@ -505,6 +583,59 @@ public class DateTimeComboPicker
      */
     public boolean isAutoAdvance() {
         return !getElement().getProperty("autoAdvanceDisabled", false);
+    }
+
+    /**
+     * Sets the delay, in milliseconds, before the analog clock advances to
+     * the next view after a selection, giving the selection time to register
+     * visually. The default is 300 ms; {@code 0} advances immediately. Only
+     * applies when the time view is {@link TimeView#CLOCK} and auto-advance
+     * is enabled.
+     *
+     * @param autoAdvanceDelayMs
+     *            the delay in milliseconds, not negative
+     */
+    public void setAutoAdvanceDelay(int autoAdvanceDelayMs) {
+        if (autoAdvanceDelayMs < 0) {
+            throw new IllegalArgumentException(
+                    "autoAdvanceDelayMs must not be negative");
+        }
+        getElement().setProperty("autoAdvanceDelay", autoAdvanceDelayMs);
+    }
+
+    /**
+     * Gets the delay before the analog clock advances to the next view.
+     *
+     * @return the delay in milliseconds
+     */
+    public int getAutoAdvanceDelay() {
+        return getElement().getProperty("autoAdvanceDelay", 300);
+    }
+
+    /**
+     * Sets whether the fullscreen (mobile) popup shows Date/Time tabs — one
+     * section at a time, with the value formatted in the field's format
+     * shown above — instead of stacking the calendar above the time
+     * selector. Enabled by default; only applies when the format has both a
+     * date and a time part. When disabled, the sections stack vertically.
+     * The tab labels can be localized with
+     * {@link DateTimeComboPickerI18n#setDateTab(String)} and
+     * {@link DateTimeComboPickerI18n#setTimeTab(String)}.
+     *
+     * @param mobileTabs
+     *            {@code true} to use the tabbed fullscreen layout
+     */
+    public void setMobileTabs(boolean mobileTabs) {
+        getElement().setProperty("mobileTabsDisabled", !mobileTabs);
+    }
+
+    /**
+     * Gets whether the fullscreen (mobile) popup uses the tabbed layout.
+     *
+     * @return {@code true} if the Date/Time tabs are enabled
+     */
+    public boolean isMobileTabs() {
+        return !getElement().getProperty("mobileTabsDisabled", false);
     }
 
     /**

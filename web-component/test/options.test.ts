@@ -46,7 +46,7 @@ describe('time steps', () => {
 
   it('selects stepped values', async () => {
     const picker = await pickerFixture(
-      html`<date-time-combo-picker minute-step="5"></date-time-combo-picker>`,
+      html`<date-time-combo-picker auto-apply minute-step="5"></date-time-combo-picker>`,
     );
     picker.value = '2026-07-15T13:00:00';
     await open(picker);
@@ -121,7 +121,7 @@ describe('initialPosition', () => {
 
   it('provides the date and time defaults for the first selection', async () => {
     const picker = await pickerFixture(
-      html`<date-time-combo-picker initial-position="2030-01-15T12:30:00"></date-time-combo-picker>`,
+      html`<date-time-combo-picker auto-apply initial-position="2030-01-15T12:30:00"></date-time-combo-picker>`,
     );
     await open(picker);
     // Picking only an hour: date and minutes come from the initial position
@@ -148,7 +148,7 @@ describe('initialPosition', () => {
   });
 });
 
-describe('action bar (autoApply=false)', () => {
+describe('action bar (staged by default)', () => {
   function actionBar(picker: DateTimeComboPicker): HTMLElement {
     return content(picker).shadowRoot!.querySelector('[part="action-bar"]')!;
   }
@@ -163,14 +163,43 @@ describe('action bar (autoApply=false)', () => {
     await nextFrame();
   }
 
-  it('hides the action bar by default', async () => {
+  it('shows the action bar by default and hides it with auto-apply', async () => {
     const picker = await pickerFixture();
     await open(picker);
-    expect(actionBar(picker).hasAttribute('hidden')).to.be.true;
+    expect(actionBar(picker).hasAttribute('hidden')).to.be.false;
+
+    const instant = await pickerFixture(html`<date-time-combo-picker auto-apply></date-time-combo-picker>`);
+    await open(instant);
+    expect(actionBar(instant).hasAttribute('hidden')).to.be.true;
+  });
+
+  it('hides the OK and Cancel buttons individually', async () => {
+    const picker = await pickerFixture(
+      html`<date-time-combo-picker ok-button-hidden cancel-button-hidden></date-time-combo-picker>`,
+    );
+    await open(picker);
+    expect(actionBar(picker).querySelector('[part="ok-action-button"]')!.hasAttribute('hidden')).to.be.true;
+    expect(actionBar(picker).querySelector('[part="cancel-action-button"]')!.hasAttribute('hidden')).to.be.true;
+  });
+
+  it('places slotted content at the start of the action bar', async () => {
+    const picker = await pickerFixture(
+      html`<date-time-combo-picker>
+        <button slot="action-bar" id="now">Now</button>
+      </date-time-combo-picker>`,
+    );
+    await open(picker);
+    const slot = actionBar(picker).querySelector<HTMLSlotElement>('slot[name="action-bar"]')!;
+    const assigned = slot.assignedElements({ flatten: true });
+    expect(assigned.length).to.equal(1);
+    expect(assigned[0].id).to.equal('now');
+    // Slotted content comes before the default buttons
+    const ok = actionBar(picker).querySelector('[part="ok-action-button"]')!;
+    expect(assigned[0].getBoundingClientRect().left).to.be.below(ok.getBoundingClientRect().left);
   });
 
   it('stages selections without changing the value', async () => {
-    const picker = await pickerFixture(html`<date-time-combo-picker .autoApply="${false}"></date-time-combo-picker>`);
+    const picker = await pickerFixture();
     picker.value = '2026-07-15T13:05:00';
     await open(picker);
     expect(actionBar(picker).hasAttribute('hidden')).to.be.false;
@@ -182,7 +211,7 @@ describe('action bar (autoApply=false)', () => {
   });
 
   it('applies the staged selection with OK and closes', async () => {
-    const picker = await pickerFixture(html`<date-time-combo-picker .autoApply="${false}"></date-time-combo-picker>`);
+    const picker = await pickerFixture(html`<date-time-combo-picker></date-time-combo-picker>`);
     picker.value = '2026-07-15T13:05:00';
     await open(picker);
     await stageDateAndTime(picker);
@@ -194,7 +223,7 @@ describe('action bar (autoApply=false)', () => {
   });
 
   it('discards the staged selection with Cancel', async () => {
-    const picker = await pickerFixture(html`<date-time-combo-picker .autoApply="${false}"></date-time-combo-picker>`);
+    const picker = await pickerFixture(html`<date-time-combo-picker></date-time-combo-picker>`);
     picker.value = '2026-07-15T13:05:00';
     await open(picker);
     await stageDateAndTime(picker);
@@ -210,7 +239,7 @@ describe('action bar (autoApply=false)', () => {
   });
 
   it('discards the staged selection when closed without OK', async () => {
-    const picker = await pickerFixture(html`<date-time-combo-picker .autoApply="${false}"></date-time-combo-picker>`);
+    const picker = await pickerFixture(html`<date-time-combo-picker></date-time-combo-picker>`);
     picker.value = '2026-07-15T13:05:00';
     await open(picker);
     await stageDateAndTime(picker);
@@ -221,7 +250,7 @@ describe('action bar (autoApply=false)', () => {
 
   it('does not close a date-only picker on selection when staging', async () => {
     const picker = await pickerFixture(
-      html`<date-time-combo-picker format="dd.MM.yyyy" .autoApply="${false}"></date-time-combo-picker>`,
+      html`<date-time-combo-picker format="dd.MM.yyyy"></date-time-combo-picker>`,
     );
     await open(picker);
     const calendar = content(picker).shadowRoot!.querySelector('dtcp-month-calendar')!;
@@ -250,7 +279,7 @@ describe('column fit (no scrolling when items fit)', () => {
 
   it('does not scroll a fitting column on selection', async () => {
     const picker = await pickerFixture(
-      html`<date-time-combo-picker format="M/d/yyyy h:mm a"></date-time-combo-picker>`,
+      html`<date-time-combo-picker auto-apply format="M/d/yyyy h:mm a"></date-time-combo-picker>`,
     );
     picker.value = '2026-07-15T03:00:00';
     await open(picker);

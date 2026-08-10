@@ -12,7 +12,7 @@ no `ss` in the pattern → no seconds column, no `mm` → no minutes column,
 | --- | --- |
 | ![Default popup](docs/img/popup-default.png) | ![12h popup](docs/img/popup-12h.png) |
 
-| OK/Cancel action bar | Mobile bottom sheet | Analog clock |
+| Action bar with a custom button | Mobile bottom sheet (Date/Time tabs) | Analog clock |
 | --- | --- | --- |
 | ![Action bar](docs/img/action-bar.png) | ![Fullscreen](docs/img/fullscreen.png) | ![Analog clock](docs/img/clock.png) |
 
@@ -51,7 +51,7 @@ picker.setMinuteStep(5);                    // minutes column: 00, 05, ... 55
 picker.setSecondStep(30);                   // seconds column: 00, 30
 picker.setInitialPosition(                  // popup position & defaults when empty
         LocalDateTime.of(2030, 1, 15, 12, 30));
-picker.setAutoApply(false);                 // stage selections behind an OK/Cancel bar
+picker.setAutoApply(true);                  // apply instantly, without the OK/Cancel bar
 picker.setDateDisabledFunction(             // disable dates client-side (0-based month!)
         "(d) => [0, 6].includes(new Date(d.year, d.month, d.day).getDay())");
 picker.setTimeView(TimeView.CLOCK);         // analog clock dial instead of columns
@@ -131,10 +131,14 @@ Examples: `dd.MM.yyyy HH:mm` (default), `dd.MM.yyyy HH:mm:ss`, `M/d/yyyy h:mm a`
 | `setMin(LocalDateTime)` / `setMax(...)` | `min` / `max` | Allowed range; out-of-range values are invalid |
 | `setTimeView(TimeView)` | `time-view` | `COLUMNS` (default) or `CLOCK` (analog dial) |
 | `setAutoAdvance(boolean)` | `auto-advance-disabled` (inverted) | Clock only: advance to the next view after selecting (default on) |
+| `setAutoAdvanceDelay(int)` | `auto-advance-delay` | Clock only: milliseconds before auto-advancing (default 300) |
+| `setMobileTabs(boolean)` | `mobile-tabs-disabled` (inverted) | Fullscreen only: Date/Time tabs with a formatted-value header (default on) |
 | `setHourStep(int)` / `setMinuteStep(int)` / `setSecondStep(int)` | `hour-step` / `minute-step` / `second-step` | Interval between selectable time values |
 | `setDateDisabledFunction(String)` | `isDateDisabled` (function property) | Disables individual dates; disabled dates fail validation |
 | `setInitialPosition(LocalDateTime)` | `initial-position` | Popup position and date/time defaults while the field is empty |
-| `setAutoApply(boolean)` | `auto-apply` | `false` stages selections behind an OK/Cancel action bar |
+| `setAutoApply(boolean)` | `auto-apply` | `true` applies selections immediately, without the OK/Cancel action bar (default: staged) |
+| `setOkButtonVisible` / `setCancelButtonVisible` | `ok-button-hidden` / `cancel-button-hidden` (inverted) | Hide a default action-bar button |
+| `addToActionBar(Component...)` | `slot="action-bar"` | Custom content at the start of the action bar |
 | `setOpened(boolean)` | `opened` | Opens/closes the popup |
 | `setAutoOpen(boolean)` | `auto-open-disabled` (inverted) | Whether the popup opens on field interaction |
 | `setShowWeekNumbers(boolean)` | `show-week-numbers` | ISO week numbers (requires first day of week = Monday) |
@@ -193,7 +197,8 @@ against the consuming application's Vaadin 24 platform packages.
   Alternatively, `time-view="clock"` renders an analog dial in the Material
   Design (Android) time-picker style: tap or drag to pick, double ring for 24h,
   digital readout to switch between hour/minute/second views, `role="slider"`
-  keyboard support, and automatic view advancement.
+  keyboard support, and automatic view advancement (disable with
+  `auto-advance-disabled`).
 - **Calendar keyboard navigation**: `ArrowDown` in the field moves focus into the
   calendar; arrows move by day/week, `PageUp`/`PageDown` by month
   (`Shift` for year), `Home`/`End` to first/last day of the month,

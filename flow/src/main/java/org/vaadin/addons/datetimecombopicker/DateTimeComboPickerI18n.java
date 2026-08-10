@@ -34,6 +34,8 @@ public class DateTimeComboPickerI18n implements Serializable {
     private String cancel;
     private String prevMonth;
     private String nextMonth;
+    private String dateTab;
+    private String timeTab;
     private String hours;
     private String minutes;
     private String seconds;
@@ -257,6 +259,52 @@ public class DateTimeComboPickerI18n implements Serializable {
      */
     public DateTimeComboPickerI18n setNextMonth(String nextMonth) {
         this.nextMonth = nextMonth;
+        return this;
+    }
+
+    /**
+     * Gets the label of the Date tab in the tabbed fullscreen layout (see
+     * {@link DateTimeComboPicker#setMobileTabs(boolean)}).
+     *
+     * @return the label, or {@code null} for the default
+     */
+    public String getDateTab() {
+        return dateTab;
+    }
+
+    /**
+     * Sets the label of the Date tab in the tabbed fullscreen layout (see
+     * {@link DateTimeComboPicker#setMobileTabs(boolean)}).
+     *
+     * @param dateTab
+     *            the label
+     * @return this instance for method chaining
+     */
+    public DateTimeComboPickerI18n setDateTab(String dateTab) {
+        this.dateTab = dateTab;
+        return this;
+    }
+
+    /**
+     * Gets the label of the Time tab in the tabbed fullscreen layout (see
+     * {@link DateTimeComboPicker#setMobileTabs(boolean)}).
+     *
+     * @return the label, or {@code null} for the default
+     */
+    public String getTimeTab() {
+        return timeTab;
+    }
+
+    /**
+     * Sets the label of the Time tab in the tabbed fullscreen layout (see
+     * {@link DateTimeComboPicker#setMobileTabs(boolean)}).
+     *
+     * @param timeTab
+     *            the label
+     * @return this instance for method chaining
+     */
+    public DateTimeComboPickerI18n setTimeTab(String timeTab) {
+        this.timeTab = timeTab;
         return this;
     }
 

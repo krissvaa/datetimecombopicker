@@ -6,8 +6,13 @@ import { defineConfig, devices } from '@playwright/test';
  * The Vaadin version for the demo server can be overridden with the
  * VAADIN_VERSION environment variable (defaults to the add-on's minimum
  * supported platform version).
+ *
+ * Set VAADIN_PRODUCTION=true to run the demo in production mode. CI uses
+ * this: since Vaadin 24.10, dev mode requires a signed-in Vaadin account
+ * (license checker), which would block a headless build server.
  */
 const vaadinVersion = process.env.VAADIN_VERSION ?? '24.4.20';
+const productionMode = process.env.VAADIN_PRODUCTION === 'true';
 
 export default defineConfig({
   testDir: './tests',
@@ -33,7 +38,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `mvn -f ../flow/pom.xml jetty:run -B -ntp -Dvaadin.version=${vaadinVersion}`,
+    command: `mvn -f ../flow/pom.xml jetty:run -B -ntp -Dvaadin.version=${vaadinVersion}${
+      productionMode ? ' -Pproduction' : ''
+    }`,
     url: 'http://localhost:8080',
     // First run downloads Maven + npm dependencies and builds the dev bundle
     timeout: 900_000,

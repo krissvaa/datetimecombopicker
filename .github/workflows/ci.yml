@@ -93,6 +93,7 @@ jobs:
         run: npx playwright test
         env:
           VAADIN_VERSION: ${{ matrix.vaadin }}
+          VAADIN_PRODUCTION: 'true'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

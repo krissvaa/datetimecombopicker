@@ -1,0 +1,13 @@
+{
+  "name": "datetimecombopicker-it",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "End-to-end integration tests: drive the Flow demo app in a real browser.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}

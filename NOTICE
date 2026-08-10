@@ -1,0 +1,18 @@
+DateTimeComboPicker
+Copyright 2026 DateTimeComboPicker contributors
+
+This product includes software developed at Vaadin Ltd (https://vaadin.com/).
+
+The month-calendar implementation in web-component/src/vendor/ is forked from
+the @vaadin/date-picker package of the vaadin/web-components repository,
+version v24.8.14 (https://github.com/vaadin/web-components/tree/v24.8.14),
+licensed under the Apache License, Version 2.0.
+
+Forked files (original name -> forked name):
+  packages/date-picker/src/vaadin-lit-month-calendar.js    -> web-component/src/vendor/dtcp-month-calendar.js
+  packages/date-picker/src/vaadin-month-calendar-mixin.js  -> web-component/src/vendor/month-calendar-mixin.js
+  packages/date-picker/src/vaadin-month-calendar-styles.js -> web-component/src/vendor/month-calendar-styles.js
+  packages/date-picker/src/vaadin-date-picker-helper.js    -> web-component/src/vendor/date-picker-helper.js
+
+Parts of the Lumo theme CSS are adapted from the same repository and version
+(packages/date-picker/theme/lumo/).

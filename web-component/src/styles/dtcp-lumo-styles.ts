@@ -601,6 +601,11 @@ registerStyles(
 
     [part~='date'] {
       transition: color 0.1s;
+      /* Keep the z-index:-1 highlight circle (::before) inside the cell:
+         without a local stacking context it paints behind the opaque
+         overlay background (Vaadin 25 renders the overlay in the field's
+         shadow root with no stacking context in between) */
+      isolation: isolate;
     }
 
     [part~='date']:not(:empty) {

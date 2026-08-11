@@ -467,6 +467,30 @@ public class DateTimeComboPicker
     }
 
     /**
+     * Sets whether the popup closes automatically once every part offered
+     * by the format — the date and each visible time part — has been picked
+     * since the popup opened. Meant for {@linkplain #setAutoApply(boolean)
+     * auto-apply} mode, which has no OK button to end the flow; without
+     * auto-apply this option has no effect. Disabled by default.
+     *
+     * @param closeOnComplete
+     *            {@code true} to close the popup when the selection is
+     *            complete
+     */
+    public void setCloseOnComplete(boolean closeOnComplete) {
+        getElement().setProperty("closeOnComplete", closeOnComplete);
+    }
+
+    /**
+     * Gets whether the popup closes automatically on a complete selection.
+     *
+     * @return {@code true} if close-on-complete is enabled
+     */
+    public boolean isCloseOnComplete() {
+        return getElement().getProperty("closeOnComplete", false);
+    }
+
+    /**
      * Sets whether the OK button of the action bar is visible. Visible by
      * default. Hiding both default buttons leaves only content added with
      * {@link #addToActionBar(Component...)}.

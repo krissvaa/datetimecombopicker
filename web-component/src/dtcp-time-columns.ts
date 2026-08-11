@@ -434,7 +434,7 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
     }
 
     this.value = next;
-    this.dispatchEvent(new CustomEvent('time-changed', { detail: next }));
+    this.dispatchEvent(new CustomEvent('time-changed', { detail: { ...next, changedPart: kind } }));
     // Re-render happens synchronously enough for smooth scroll on next frame
     requestAnimationFrame(() => this.scrollToValue());
   }

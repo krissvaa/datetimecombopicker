@@ -138,6 +138,7 @@ Java method ↔ element property/attribute:
 | `setDateDisabledFunction(String)` | `isDateDisabled` (function) | none | Disable individual dates — see below |
 | `setInitialPosition(LocalDateTime)` | `initial-position` | none | See below |
 | `setAutoApply(boolean)` | `auto-apply` | `false` | See [Action bar](#action-bar-autoapply) |
+| `setCloseOnComplete(boolean)` | `close-on-complete` | `false` | With auto-apply: close once the date and every visible time part were picked |
 | `setOkButtonVisible` / `setCancelButtonVisible` | `ok-button-hidden` / `cancel-button-hidden` (inverted) | visible | Hide a default action-bar button |
 | `addToActionBar(Component...)` | `slot="action-bar"` | — | Custom content at the start of the action bar |
 | `setAutoOpen(boolean)` | `auto-open-disabled` (inverted) | open | Whether clicking/typing in the field opens the popup |
@@ -193,7 +194,9 @@ the popup preview; **OK** applies the staged value and closes, while
 **Cancel**, <kbd>Escape</kbd> or clicking outside discards it. Button labels
 come from i18n (`ok`, `cancel`). Typed text still commits directly on
 <kbd>Enter</kbd>. `setAutoApply(true)` applies every selection immediately
-and hides the action bar.
+and hides the action bar; since that leaves no OK button to end the flow,
+`setCloseOnComplete(true)` makes the popup close on its own once the date
+and every visible time part have been picked.
 
 The action bar is customizable: `addToActionBar(new Button("Now", e -> ...))`
 places components at its start, before the Cancel/OK buttons

@@ -186,6 +186,15 @@ class DateTimeComboPickerTest {
     }
 
     @Test
+    void closeOnComplete_disabledByDefault_mapsToProperty() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        assertFalse(picker.isCloseOnComplete());
+        picker.setCloseOnComplete(true);
+        assertTrue(picker.isCloseOnComplete());
+        assertTrue(picker.getElement().getProperty("closeOnComplete", false));
+    }
+
+    @Test
     void actionBarButtons_visibleByDefault_mapToInvertedProperties() {
         DateTimeComboPicker picker = new DateTimeComboPicker();
         assertTrue(picker.isOkButtonVisible());

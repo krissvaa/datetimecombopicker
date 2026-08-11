@@ -78,6 +78,7 @@ const FULLSCREEN_MEDIA_QUERY = '(max-width: 450px), (max-height: 450px)';
  * `isDateDisabled` | `({day, month, year}) => boolean` (0-based month) disabling dates | -
  * `initialPosition` (`initial-position`) | ISO date(-time) shown and used as defaults when empty | -
  * `autoApply` (`auto-apply`) | `true` applies selections immediately without the OK/Cancel action bar | `false`
+ * `closeOnComplete` (`close-on-complete`) | With `autoApply`: close once the date and every visible time part have been picked | `false`
  * `okButtonHidden` / `cancelButtonHidden` (`ok-button-hidden`/`cancel-button-hidden`) | Hide a default action-bar button | `false`
  * `opened` (`opened`) | Whether the popup is open | `false`
  * `autoOpenDisabled` (`auto-open-disabled`) | Only open the popup from the toggle button | `false`
@@ -111,6 +112,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   declare isDateDisabled: IsDateDisabledFn | undefined;
   declare initialPosition: string | null;
   declare autoApply: boolean;
+  declare closeOnComplete: boolean;
   declare okButtonHidden: boolean;
   declare cancelButtonHidden: boolean;
   declare timeView: TimeViewKind;
@@ -130,6 +132,8 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   declare $: Record<string, HTMLElement>;
 
   private __tokens: Token[] = parsePattern(DEFAULT_FORMAT);
+  /** Parts explicitly picked in the popup since it opened (for closeOnComplete). */
+  private __pickedParts = new Set<string>();
   private __keepInputValue = false;
   private _tooltipController?: TooltipController;
   private __violation: 'badInput' | 'required' | 'min' | 'max' | 'dateDisabled' | null = null;
@@ -252,6 +256,18 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
        * and the action bar is hidden.
        */
       autoApply: {
+        type: Boolean,
+        value: false,
+        sync: true,
+      },
+
+      /**
+       * When true (with `autoApply`), the popup closes automatically once
+       * every part offered by the format — the date and each visible time
+       * part — has been picked since the popup opened. Gives instant-apply
+       * pickers (which have no OK button) a natural end to the flow.
+       */
+      closeOnComplete: {
         type: Boolean,
         value: false,
         sync: true,
@@ -788,6 +804,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       return;
     }
     this.inputElement?.setAttribute('aria-expanded', String(opened));
+    this.__pickedParts.clear();
     if (opened) {
       requestAnimationFrame(() => {
         const content = this.$.overlayContent as DtcpOverlayContent;
@@ -937,11 +954,13 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     if (this.autoApply && !this._timeConfig.hasTime) {
       // Plain date pattern: behave like a date picker and close on selection
       this.close();
+      return;
     }
+    this.__trackPickedPart('date');
   }
 
   /** @private */
-  __onTimeSelected(event: CustomEvent<TimeValue>) {
+  __onTimeSelected(event: CustomEvent<TimeValue & { changedPart?: string }>) {
     const time = event.detail;
     const base = this.__currentParts() ?? this.__referenceParts();
     const parts: DateTimeParts = {
@@ -953,6 +972,33 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       seconds: time.seconds,
     };
     this.__applyParts(parts);
+    if (time.changedPart) {
+      this.__trackPickedPart(time.changedPart);
+    }
+  }
+
+  /**
+   * Records an explicitly picked part and, with `closeOnComplete` in
+   * auto-apply mode, closes the popup once every part the format offers
+   * (the date and each visible time part; AM/PM not required) has been
+   * picked since the popup opened.
+   * @private
+   */
+  __trackPickedPart(part: string) {
+    this.__pickedParts.add(part);
+    if (!this.closeOnComplete || !this.autoApply || !this.opened) {
+      return;
+    }
+    const config = this._timeConfig;
+    const required = [
+      config.hasDate ? 'date' : null,
+      config.showHours ? 'hours' : null,
+      config.showMinutes ? 'minutes' : null,
+      config.showSeconds ? 'seconds' : null,
+    ].filter((p): p is string => p !== null);
+    if (required.every((p) => this.__pickedParts.has(p))) {
+      this.close();
+    }
   }
 
   /** @private */

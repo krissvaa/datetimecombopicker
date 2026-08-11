@@ -689,7 +689,7 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
   __commitActiveValue(selected: number, advance: boolean) {
     const next: TimeValue = { ...this.__displayTime(), [this._activeView]: selected };
     this.value = next;
-    this.dispatchEvent(new CustomEvent('time-changed', { detail: next }));
+    this.dispatchEvent(new CustomEvent('time-changed', { detail: { ...next, changedPart: this._activeView } }));
 
     if (advance && !this.autoAdvanceDisabled) {
       const views = this.__views();
@@ -719,7 +719,7 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
     if (hours !== display.hours || this.value === null) {
       const next: TimeValue = { ...display, hours };
       this.value = next;
-      this.dispatchEvent(new CustomEvent('time-changed', { detail: next }));
+      this.dispatchEvent(new CustomEvent('time-changed', { detail: { ...next, changedPart: 'meridiem' } }));
     }
   }
 }

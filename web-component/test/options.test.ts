@@ -248,6 +248,54 @@ describe('action bar (staged by default)', () => {
     expect(picker.value).to.equal('2026-07-15T13:05:00');
   });
 
+  it('closes on complete selection with close-on-complete + auto-apply', async () => {
+    const picker = await pickerFixture(
+      html`<date-time-combo-picker auto-apply close-on-complete></date-time-combo-picker>`,
+    );
+    await open(picker);
+    const calendar = content(picker).shadowRoot!.querySelector('dtcp-month-calendar')!;
+    calendar.dispatchEvent(
+      new CustomEvent('date-tap', { detail: { date: new Date(2026, 6, 20) }, bubbles: true, composed: true }),
+    );
+    await nextFrame();
+    expect(picker.opened).to.be.true; // time parts still unpicked
+    timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="hours"] [data-value="9"]')!.click();
+    await nextFrame();
+    expect(picker.opened).to.be.true; // minutes still unpicked
+    timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="minutes"] [data-value="30"]')!.click();
+    await nextFrame();
+    expect(picker.opened).to.be.false;
+    expect(picker.value).to.equal('2026-07-20T09:30:00');
+  });
+
+  it('stays open after a complete selection without close-on-complete', async () => {
+    const picker = await pickerFixture(html`<date-time-combo-picker auto-apply></date-time-combo-picker>`);
+    await open(picker);
+    const calendar = content(picker).shadowRoot!.querySelector('dtcp-month-calendar')!;
+    calendar.dispatchEvent(
+      new CustomEvent('date-tap', { detail: { date: new Date(2026, 6, 20) }, bubbles: true, composed: true }),
+    );
+    await nextFrame();
+    timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="hours"] [data-value="9"]')!.click();
+    await nextFrame();
+    timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="minutes"] [data-value="30"]')!.click();
+    await nextFrame();
+    expect(picker.opened).to.be.true;
+  });
+
+  it('close-on-complete tracks only the visible time parts', async () => {
+    const picker = await pickerFixture(
+      html`<date-time-combo-picker auto-apply close-on-complete format="HH:mm"></date-time-combo-picker>`,
+    );
+    await open(picker);
+    timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="hours"] [data-value="9"]')!.click();
+    await nextFrame();
+    expect(picker.opened).to.be.true;
+    timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="minutes"] [data-value="30"]')!.click();
+    await nextFrame();
+    expect(picker.opened).to.be.false;
+  });
+
   it('does not close a date-only picker on selection when staging', async () => {
     const picker = await pickerFixture(
       html`<date-time-combo-picker format="dd.MM.yyyy"></date-time-combo-picker>`,

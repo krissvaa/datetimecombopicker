@@ -128,8 +128,9 @@ public class DemoView extends VerticalLayout {
         addWithValueOutput(weekdaysOnly);
 
         DateTimeComboPicker instant = new DateTimeComboPicker(
-                "Instant apply (setAutoApply(true))");
+                "Instant apply, closes when complete");
         instant.setAutoApply(true);
+        instant.setCloseOnComplete(true);
         addWithValueOutput(instant);
 
         DateTimeComboPicker customActions = new DateTimeComboPicker(

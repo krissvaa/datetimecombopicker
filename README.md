@@ -137,6 +137,7 @@ Examples: `dd.MM.yyyy HH:mm` (default), `dd.MM.yyyy HH:mm:ss`, `M/d/yyyy h:mm a`
 | `setDateDisabledFunction(String)` | `isDateDisabled` (function property) | Disables individual dates; disabled dates fail validation |
 | `setInitialPosition(LocalDateTime)` | `initial-position` | Popup position and date/time defaults while the field is empty |
 | `setAutoApply(boolean)` | `auto-apply` | `true` applies selections immediately, without the OK/Cancel action bar (default: staged) |
+| `setCloseOnComplete(boolean)` | `close-on-complete` | With auto-apply: close the popup once the date and every visible time part have been picked (default off) |
 | `setOkButtonVisible` / `setCancelButtonVisible` | `ok-button-hidden` / `cancel-button-hidden` (inverted) | Hide a default action-bar button |
 | `addToActionBar(Component...)` | `slot="action-bar"` | Custom content at the start of the action bar |
 | `setOpened(boolean)` | `opened` | Opens/closes the popup |

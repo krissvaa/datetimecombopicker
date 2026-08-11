@@ -41,13 +41,11 @@ public class DemoView extends VerticalLayout {
         setSpacing(true);
         setPadding(true);
 
-        add(new H1("DateTimeComboPicker demo"));
-
-        // -------------------------------------------------- Theme switcher
+        // Header row: title on the left, theme switcher on the right.
         // Vaadin 25 themes are plain stylesheets, swappable at runtime. The
         // CSS files are copied into src/main/webapp/demo-themes by the build.
         Select<String> theme = new Select<>();
-        theme.setLabel("Theme");
+        theme.setAriaLabel("Theme");
         theme.setItems("Base", "Lumo", "Aura");
         theme.setValue("Base");
         Checkbox dark = new Checkbox("Dark");
@@ -55,11 +53,14 @@ public class DemoView extends VerticalLayout {
         dark.addValueChangeListener(e -> applyTheme(theme, dark));
         HorizontalLayout themeBar = new HorizontalLayout(theme, dark);
         themeBar.setDefaultVerticalComponentAlignment(
-                FlexComponent.Alignment.BASELINE);
-        themeBar.setWidthFull();
-        themeBar.setJustifyContentMode(
-                FlexComponent.JustifyContentMode.END);
-        add(themeBar);
+                FlexComponent.Alignment.CENTER);
+        HorizontalLayout header = new HorizontalLayout(
+                new H1("DateTimeComboPicker demo"), themeBar);
+        header.setWidthFull();
+        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        header.setDefaultVerticalComponentAlignment(
+                FlexComponent.Alignment.CENTER);
+        add(header);
 
         // ------------------------------------------------ Format-driven UI
         add(new H2("Format-driven fields"));

@@ -87,6 +87,9 @@ const dtcpOverlayStyles = css`
  * @private
  */
 class DtcpOverlay extends PositionMixin(OverlayMixin(DirMixin(ThemableMixin(PolylitMixin(LitElement))))) {
+  /** Shadow-root id map provided by PolylitMixin. */
+  declare $: Record<string, HTMLElement>;
+
   static get is() {
     return 'dtcp-overlay';
   }
@@ -112,8 +115,63 @@ class DtcpOverlay extends PositionMixin(OverlayMixin(DirMixin(ThemableMixin(Poly
       }
       return;
     }
+    const side = this.__updatePlacement();
     // @ts-expect-error the mixin method is not exposed in the typings
     super._updatePosition();
+    if (side) {
+      this.__fitSidePlacement();
+    }
+  }
+
+  /**
+   * In side mode the mixin still aligns the popup to the field's vertical
+   * edge and clamps it there; shift it along the field instead so the full
+   * popup fits in the viewport (top-aligned to the field when possible).
+   * @private
+   */
+  __fitSidePlacement() {
+    const target = (this as any).positionTarget as HTMLElement | undefined;
+    const overlayPart = this.$ && this.$.overlay;
+    if (!target || !overlayPart) {
+      return;
+    }
+    const margin = 8;
+    const partStyle = getComputedStyle(overlayPart);
+    const borders = parseFloat(partStyle.borderTopWidth) + parseFloat(partStyle.borderBottomWidth);
+    const needed = (((this as any).requiredVerticalSpace as number) || overlayPart.scrollHeight) + borders;
+    const top = Math.max(margin, Math.min(target.getBoundingClientRect().top, window.innerHeight - needed - margin));
+    this.style.justifyContent = 'flex-start';
+    this.style.top = `${top}px`;
+    this.style.removeProperty('bottom');
+  }
+
+  /**
+   * Places the popup beside the field when neither above nor below has
+   * room for it (short window, field mid-screen), instead of clamping and
+   * scrolling. Falls back to the normal below/above placement — and to
+   * clamping — as soon as the space situation allows.
+   * @private
+   */
+  __updatePlacement(): boolean {
+    const target = (this as any).positionTarget as HTMLElement | undefined;
+    const overlayPart = this.$ && (this.$.overlay as HTMLElement | undefined);
+    if (!target || !overlayPart || !(this as any).opened) {
+      return false;
+    }
+    const margin = 8;
+    const targetRect = target.getBoundingClientRect();
+    const neededHeight = (((this as any).requiredVerticalSpace as number) || overlayPart.offsetHeight) + margin;
+    const width = overlayPart.offsetWidth + margin;
+    const fitsBelow = window.innerHeight - targetRect.bottom >= neededHeight;
+    const fitsAbove = targetRect.top >= neededHeight;
+    const sideFits =
+      width > margin && (window.innerWidth - targetRect.right >= width || targetRect.left >= width);
+    const side = !fitsBelow && !fitsAbove && sideFits;
+    if (side !== (this as any).noHorizontalOverlap) {
+      (this as any).noHorizontalOverlap = side;
+      (this as any).noVerticalOverlap = !side;
+    }
+    return side;
   }
 
   /**

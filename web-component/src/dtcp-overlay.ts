@@ -24,6 +24,11 @@ const dtcpOverlayStyles = css`
     height: auto;
     max-height: 100%;
     overflow: auto;
+    /* On platforms with space-consuming (classic) scrollbars, reserve the
+       gutter up front: otherwise the vertical scrollbar of a clamped popup
+       narrows the fixed-width content, which then overflows horizontally
+       and adds a second scrollbar */
+    scrollbar-gutter: stable;
     -webkit-tap-highlight-color: transparent;
   }
 

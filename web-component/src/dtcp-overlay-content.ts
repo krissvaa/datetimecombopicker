@@ -455,8 +455,8 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       }
 
       [part='main'] {
-        /* Height of the popup: month grid rows + header + weekdays */
-        height: calc(2.25rem * 9.5 - 2.125rem);
+        /* Height of the popup: month grid rows + header + weekdays + footer */
+        height: calc(2.25rem * 9.5);
         flex: none;
       }
 
@@ -503,7 +503,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
         /* Fixed height (like the desktop popup) so 5- and 6-row months don't
            resize the sheet, keeping the prev/next buttons in place. The extra
            bottom padding keeps the Today button off the sheet/action-bar edge. */
-        height: calc(2.25rem * 9.5 - 2.125rem + 12px);
+        height: calc(2.25rem * 9.5 + 12px);
         padding-bottom: 20px;
       }
 
@@ -572,7 +572,7 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       :host([fullscreen][tabs]) [part='main'] {
         /* Both tab panels use the calendar's fixed height so switching
            tabs does not resize the sheet */
-        height: calc(2.25rem * 9.5 - 2.125rem + 12px);
+        height: calc(2.25rem * 9.5 + 12px);
       }
 
       :host([fullscreen][tabs]) [part='time-section'] {
@@ -691,6 +691,12 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
 
       :host([dir='rtl']) [part='next-month-button']::before {
         transform: scaleX(-1);
+      }
+
+      [part='calendar-footer'] {
+        display: flex;
+        justify-content: center;
+        padding-top: var(--vaadin-gap-xs, 0.25rem);
       }
 
       [part='today-button'] {
@@ -864,6 +870,11 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
                 @date-tap="${this.__onDateTap}"
                 @keydown="${this.__onCalendarKeyDown}"
               ></dtcp-month-calendar>
+              <div part="calendar-footer">
+                <button part="today-button" ?disabled="${!this.__todayAllowed()}" @click="${this.__onTodayClick}">
+                  ${this.i18n.today}
+                </button>
+              </div>
             `}
       </div>
       <div part="time-section" ?hidden="${!config.hasTime || (tabs && this._activeTab !== 'time')}">
@@ -893,14 +904,6 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       </div>
       </div>
       <div part="action-bar" ?hidden="${!this.showActions}">
-        <button
-          part="today-button"
-          ?hidden="${!config.hasDate}"
-          ?disabled="${!this.__todayAllowed()}"
-          @click="${this.__onTodayClick}"
-        >
-          ${this.i18n.today}
-        </button>
         <slot name="action-bar"></slot>
         <div part="action-bar-spacer"></div>
         <button part="cancel-action-button" ?hidden="${this.cancelButtonHidden}" @click="${this.__onCancelClick}">

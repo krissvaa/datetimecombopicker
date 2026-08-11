@@ -1,12 +1,12 @@
 /**
  * @license
- * Copyright (c) 2016 - 2025 Vaadin Ltd.
+ * Copyright (c) 2016 - 2026 Vaadin Ltd.
  * This program is available under Apache License Version 2.0, available at https://vaadin.com/license/
  *
- * Forked for DateTimeComboPicker from vaadin/web-components v24.8.14
- * (packages/date-picker/src/vaadin-month-calendar-styles.js). See NOTICE.
- * The visual layer at the end (Vaadin 25 base-styles model) is adapted
- * from the former Lumo theme module of this fork.
+ * Forked for DateTimeComboPicker from vaadin/web-components v25.2.7
+ * (packages/date-picker/src/styles/vaadin-month-calendar-base-styles.js).
+ * See NOTICE. The fork-specific layer at the end adds the stacking-context
+ * fix for this add-on's overlay embedding and the selection-accent chain.
  */
 import '@vaadin/component-base/src/styles/style-props.js';
 import { css } from 'lit';
@@ -14,74 +14,147 @@ import { css } from 'lit';
 export const monthCalendarStyles = css`
   :host {
     display: block;
+    padding: var(--vaadin-date-picker-month-padding, var(--vaadin-padding-s));
   }
 
-  #monthGrid {
-    width: 100%;
-    border-collapse: collapse;
+  [part='month-header'] {
+    color: var(--vaadin-date-picker-month-header-color, var(--vaadin-text-color));
+    font-size: var(--vaadin-date-picker-month-header-font-size, 0.9375rem);
+    font-weight: var(--vaadin-date-picker-month-header-font-weight, 500);
+    line-height: 1;
+    margin-bottom: 0.75rem;
+    text-align: center;
   }
 
-  #days-container tr,
-  #weekdays-container tr {
-    display: flex;
+  table {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
   }
 
-  [part~='date'] {
-    outline: none;
+  thead,
+  tbody,
+  tr {
+    display: contents;
   }
 
-  [part~='disabled'] {
-    pointer-events: none;
+  [part~='weekday'] {
+    color: var(--vaadin-date-picker-weekday-color, var(--vaadin-text-color-secondary));
+    font-size: var(--vaadin-date-picker-weekday-font-size, 0.75rem);
+    font-weight: var(--vaadin-date-picker-weekday-font-weight, 500);
+    margin-bottom: 0.375rem;
   }
 
-  [part='week-number'][hidden],
-  [part='weekday'][hidden] {
+  /* Week numbers are on a separate row, don't reserve space on weekday row. */
+  [part~='weekday']:empty {
     display: none;
   }
 
-  [part='weekday'],
+  [part~='week-number'] {
+    grid-column: -1 / 1;
+    color: var(--vaadin-date-picker-week-number-color, var(--vaadin-text-color-secondary));
+    font-size: var(--vaadin-date-picker-week-number-font-size, 0.7rem);
+    line-height: 1;
+    margin-top: 0.125em;
+    margin-bottom: 0.125em;
+    gap: 0.25em;
+  }
+
+  [part~='week-number']::after {
+    content: '';
+    height: 1px;
+    flex: 1;
+    background: var(
+      --vaadin-date-picker-week-divider-color,
+      var(--vaadin-divider-color, var(--vaadin-border-color-secondary))
+    );
+  }
+
+  [part~='weekday'],
+  [part~='week-number'],
   [part~='date'] {
-    width: calc(100% / 7);
-    padding: 0;
-    font-weight: normal;
-  }
-
-  [part='weekday']:empty,
-  [part='week-number'] {
-    width: 12.5%;
-    flex-shrink: 0;
+    align-items: center;
+    display: flex;
+    justify-content: center;
     padding: 0;
   }
 
-  :host([week-numbers]) [part='weekday']:not(:empty),
-  :host([week-numbers]) [part~='date'] {
-    width: 12.5%;
+  [part~='date'] {
+    border-radius: var(--vaadin-date-picker-date-border-radius, var(--vaadin-radius-m));
+    position: relative;
+    height: var(--vaadin-date-picker-date-height, 2rem);
+    cursor: var(--vaadin-clickable-cursor);
+    outline: none;
+  }
+
+  [part~='date']:empty {
+    pointer-events: none !important;
+  }
+
+  [part~='date']::after {
+    border-radius: inherit;
+    content: '';
+    position: absolute;
+    z-index: -1;
+    height: min(2em, 100%);
+    aspect-ratio: 1;
+  }
+
+  :where([part~='date']:focus-visible)::after {
+    outline: var(--vaadin-focus-ring-width) solid var(--vaadin-focus-ring-color);
+    outline-offset: calc(var(--vaadin-focus-ring-width) * -1);
+  }
+
+  [part~='today'] {
+    color: var(--vaadin-date-picker-date-today-color, var(--vaadin-text-color));
+  }
+
+  [part~='selected'] {
+    color: var(--vaadin-date-picker-date-selected-color, var(--vaadin-background-color));
+  }
+
+  [part~='selected']::after {
+    background: var(--vaadin-date-picker-date-selected-background, var(--vaadin-text-color));
+    outline-offset: 1px;
+  }
+
+  [disabled] {
+    cursor: var(--vaadin-disabled-cursor);
+    color: var(--vaadin-date-picker-date-disabled-color, var(--vaadin-text-color-disabled));
+    opacity: 0.7;
+  }
+
+  [hidden] {
+    display: none;
   }
 
   @media (forced-colors: active) {
-    [part~='date'][part~='focused'] {
-      outline: 1px solid;
+    [part~='week-number']::after {
+      background: CanvasText;
     }
 
-    [part~='date'][part~='selected'] {
-      outline: 3px solid;
+    [part~='today'] {
+      font-weight: 600;
+    }
+
+    [part~='selected'] {
+      forced-color-adjust: none;
+      --vaadin-date-picker-date-selected-color: SelectedItemText;
+      color: SelectedItemText !important;
+      --vaadin-date-picker-date-selected-background: SelectedItem;
+    }
+
+    [disabled] {
+      color: GrayText !important;
     }
   }
 
   /* --------------------------------------------------------------------
-     Visual layer (Vaadin 25 base-styles model). The selection accent
-     follows the app theme's date-picker accent; override with
-     --dtcp-selection-background / --dtcp-selection-color. */
+     Fork-specific layer (not in upstream). */
+
   :host {
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    font-size: 1rem;
-    color: var(--vaadin-text-color);
-    text-align: center;
-    padding: 0 0.25rem;
-    --_focus-ring-color: var(--vaadin-focus-ring-color, var(--vaadin-text-color));
-    --_focus-ring-width: var(--vaadin-focus-ring-width, 2px);
+    /* Selection accent: explicit --dtcp-* override, else the theme's
+       date-picker accent tokens (Aura and custom themes), else the Lumo
+       primary color, else the monochrome base. */
     --_accent-bg: var(
       --dtcp-selection-background,
       var(--vaadin-date-picker-date-selected-background, var(--lumo-primary-color, var(--vaadin-text-color)))
@@ -90,143 +163,43 @@ export const monthCalendarStyles = css`
       --dtcp-selection-color,
       var(--vaadin-date-picker-date-selected-color, var(--lumo-primary-contrast-color, var(--vaadin-background-color)))
     );
-  }
-
-  /* Month header (visually hidden by the overlay content, kept for a11y) */
-
-  [part='month-header'] {
-    color: var(--vaadin-text-color);
-    font-size: 1.125rem;
-    line-height: 1;
-    font-weight: 500;
-    margin-bottom: 1rem;
-  }
-
-  /* Week days and numbers */
-
-  [part='weekdays'],
-  [part='weekday'],
-  [part='week-number'] {
-    font-size: 0.6875rem;
-    line-height: 1;
-    color: var(--vaadin-text-color-secondary);
-  }
-
-  [part='weekdays'] {
-    margin-bottom: 0.5rem;
-  }
-
-  [part='weekday']:empty,
-  [part='week-number'] {
-    width: 1.625rem;
-  }
-
-  /* Date and week number cells */
-
-  [part~='date'],
-  [part='week-number'] {
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 2.25rem;
-    position: relative;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
 
   [part~='date'] {
-    transition: color 0.1s;
-    /* Keep the z-index:-1 highlight circle (::before) inside the cell:
-       without a local stacking context it paints behind the opaque
-       overlay background (Vaadin 25 renders the overlay in the field's
-       shadow root with no stacking context in between) */
+    /* Keep the z-index:-1 backing shape (::after) inside the cell: without
+       a local stacking context it paints behind the opaque overlay
+       background (Vaadin 25 renders the overlay in the field's shadow root
+       with no stacking context in between) */
     isolation: isolate;
   }
 
-  [part~='date']:not(:empty) {
-    cursor: var(--vaadin-clickable-cursor);
-  }
-
-  :host([week-numbers]) [part='weekday']:not(:empty),
-  :host([week-numbers]) [part~='date'] {
-    width: calc((100% - 1.625rem) / 7);
-  }
-
-  /* Today date */
-
-  [part~='date'][part~='today'] {
-    color: var(--_accent-bg);
+  [part~='today'] {
+    color: var(--dtcp-selection-background, var(--vaadin-date-picker-date-today-color, var(--_accent-bg)));
     font-weight: 500;
   }
 
-  /* Focused date */
-
-  [part~='date']::before {
-    content: '';
-    position: absolute;
-    z-index: -1;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    min-width: 2em;
-    min-height: 2em;
-    width: 80%;
-    height: 80%;
-    max-height: 100%;
-    max-width: 100%;
-    border-radius: var(--vaadin-radius-m);
-  }
-
-  [part~='date'][part~='focused']::before {
-    box-shadow:
-      0 0 0 1px var(--vaadin-background-color),
-      0 0 0 calc(var(--_focus-ring-width) + 1px) var(--_focus-ring-color);
-  }
-
-  :host(:not([focused])) [part~='date'][part~='focused']::before {
-    animation: dtcp-month-calendar-focus-date 1.4s infinite;
-  }
-
-  @keyframes dtcp-month-calendar-focus-date {
-    50% {
-      box-shadow:
-        0 0 0 1px var(--vaadin-background-color),
-        0 0 0 calc(var(--_focus-ring-width) + 1px) transparent;
-    }
-  }
-
-  [part~='date']:not(:empty):not([part~='disabled']):not([part~='selected']):hover::before {
-    background-color: var(--vaadin-background-container);
-  }
-
-  [part~='date'][part~='selected'] {
+  [part~='selected'] {
     color: var(--_accent-fg);
   }
 
-  [part~='date'][part~='selected']::before {
-    background-color: var(--_accent-bg);
+  [part~='selected']::after {
+    background: var(--_accent-bg);
   }
 
-  [part~='date'][part~='disabled'] {
-    color: var(--vaadin-text-color-disabled);
+  [part~='date']:not(:empty):not([disabled]):not([part~='selected']):hover::after {
+    background-color: var(--vaadin-background-container);
   }
 
   @media (pointer: coarse) {
-    [part~='date']:hover:not([part~='selected'])::before,
-    :host(:not([focus-ring])) [part~='focused']:not([part~='selected'])::before {
-      display: none;
-    }
-
-    [part~='date']:not(:empty):not([part~='disabled']):active::before {
-      display: block;
-    }
-
-    :host(:not([focus-ring])) [part~='date'][part~='selected']::before {
-      box-shadow: none;
+    [part~='date']:hover:not([part~='selected'])::after {
+      background-color: transparent;
     }
   }
 
-  /* Disabled */
-
+  /* Disabled host (whole calendar) */
   :host([disabled]) * {
     color: var(--vaadin-text-color-disabled) !important;
   }

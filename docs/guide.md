@@ -372,15 +372,18 @@ The clock face size can be adjusted with `--_face-size` on `dtcp-time-clock`.
   the consuming app's Vaadin platform packages, so the add-on works without
   the npm package being installed.
 - **The month calendar is forked**, not imported, from `@vaadin/date-picker`
-  (vaadin/web-components v24.8.14, Apache-2.0) — see `NOTICE` for provenance.
+  (vaadin/web-components v25.2.7, Apache-2.0) — see `NOTICE` for provenance.
   This keeps the add-on immune to changes in Vaadin's private internals; the
   cost is manually syncing upstream fixes.
 - The popup composes the public `@vaadin/overlay` mixins; the field chrome
   comes from `@vaadin/field-base` — the same building blocks Vaadin's own
   pickers use.
-- One deliberate deviation from upstream: the forked calendar's `render()` is
-  defensive about not-yet-computed properties, because Vaadin 24.4's
-  `PolylitMixin` runs computed-property observers only after the first render.
+- Deliberate deviations from upstream in the forked calendar: `render()`
+  falls back to empty arrays for not-yet-computed properties (upstream does
+  not guard), date cells get `isolation: isolate` so their `z-index: -1`
+  backing shape stays inside the cell when the overlay renders in the field's
+  shadow root, and a small appended style layer routes the selected/today
+  accent through `--dtcp-selection-background`/`--dtcp-selection-color`.
 
 ## Development
 

@@ -1,16 +1,16 @@
 /**
  * @license
- * Copyright (c) 2016 - 2025 Vaadin Ltd.
+ * Copyright (c) 2016 - 2026 Vaadin Ltd.
  * This program is available under Apache License Version 2.0, available at https://vaadin.com/license/
  *
- * Forked for DateTimeComboPicker from vaadin/web-components v24.8.14
+ * Forked for DateTimeComboPicker from vaadin/web-components v25.2.7
  * (packages/date-picker/src/vaadin-date-picker-helper.js). Verbatim. See NOTICE.
  */
 
 /**
  * Get ISO 8601 week number for the given date.
  *
- * @param {!Date} Date object
+ * @param {!Date} date
  * @return {number} Week number
  */
 export function getISOWeekNumber(date) {

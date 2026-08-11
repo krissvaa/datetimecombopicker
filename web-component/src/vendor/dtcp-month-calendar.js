@@ -1,22 +1,24 @@
 /**
  * @license
- * Copyright (c) 2016 - 2025 Vaadin Ltd.
+ * Copyright (c) 2016 - 2026 Vaadin Ltd.
  * This program is available under Apache License Version 2.0, available at https://vaadin.com/license/
  *
- * Forked for DateTimeComboPicker from vaadin/web-components v24.8.14
- * (packages/date-picker/src/vaadin-lit-month-calendar.js).
- * Changes: element retagged to <dtcp-month-calendar>, imports adjusted, and
- * render() made defensive about not-yet-computed properties (on Vaadin 24.4
- * PolylitMixin runs computed observers only after the first render). See NOTICE.
+ * Forked for DateTimeComboPicker from vaadin/web-components v25.2.7
+ * (packages/date-picker/src/vaadin-month-calendar.js). See NOTICE.
+ * Changes: retagged to <dtcp-month-calendar>, imports rewired to the local
+ * vendor modules, LumoInjectionMixin dropped (its injection is keyed by tag
+ * name and would be inert for the renamed tag), and render() made defensive
+ * about not-yet-computed properties.
  */
 import { html, LitElement } from 'lit';
 import { defineCustomElement } from '@vaadin/component-base/src/define.js';
 import { PolylitMixin } from '@vaadin/component-base/src/polylit-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
-import { MonthCalendarMixin } from './month-calendar-mixin.js';
 import { monthCalendarStyles } from './month-calendar-styles.js';
+import { MonthCalendarMixin } from './month-calendar-mixin.js';
 
 /**
+ * @customElement dtcp-month-calendar
  * @extends HTMLElement
  * @private
  */

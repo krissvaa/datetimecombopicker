@@ -194,7 +194,7 @@ against the consuming application's Vaadin 24 platform packages.
 ## Architecture notes
 
 - The month calendar is **forked from `@vaadin/date-picker`**
-  ([vaadin/web-components](https://github.com/vaadin/web-components) v24.8.14,
+  ([vaadin/web-components](https://github.com/vaadin/web-components) v25.2.7,
   Apache-2.0) rather than imported from its private internals, so Vaadin minor
   updates cannot break it. See [`NOTICE`](NOTICE) for provenance and the list of
   forked files.

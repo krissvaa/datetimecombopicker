@@ -39,7 +39,9 @@ const dtcpOverlayStyles = css`
     margin-bottom: var(--vaadin-gap-xs, 4px);
   }
 
-  /* Fullscreen (mobile): bottom sheet with a backdrop */
+  /* Fullscreen (mobile): bottom sheet with a backdrop. The !important
+     flags beat the inline styles the V25 position mixin writes on the
+     host (top/left and flex justification for the anchored popup). */
   :host([fullscreen]) {
     top: 0 !important;
     bottom: 0 !important;
@@ -47,8 +49,8 @@ const dtcpOverlayStyles = css`
     right: 0 !important;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-end;
+    align-items: stretch !important;
+    justify-content: flex-end !important;
     padding: 0;
   }
 

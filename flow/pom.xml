@@ -243,6 +243,32 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <!-- Theme stylesheets for the demo's runtime theme
+                             switcher, served statically from the webapp dir.
+                             Copied from web-component/node_modules (populated
+                             by the npm-install execution above, so available
+                             in both dev and production runs). Generated and
+                             git-ignored; never packaged (jar packaging). -->
+                        <id>copy-demo-themes</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/src/main/webapp/demo-themes/@vaadin</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>../web-component/node_modules/@vaadin/aura</directory>
+                                    <targetPath>aura</targetPath>
+                                </resource>
+                                <resource>
+                                    <directory>../web-component/node_modules/@vaadin/vaadin-lumo-styles</directory>
+                                    <targetPath>vaadin-lumo-styles</targetPath>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <!-- Copy for this project's own demo (dev and production
                              mode); the Vaadin build only scans META-INF/frontend
                              inside jars, not the project's target/classes.

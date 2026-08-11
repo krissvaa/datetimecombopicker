@@ -50,7 +50,7 @@ immediately and the action bar is hidden.
 
 ## Using with Vaadin Flow
 
-Requires Vaadin 25.1+ and Java 21. (For Vaadin 24.x, use the 1.x add-on version from the `main` branch.)
+Requires Vaadin 25.1+ and Java 21. (For Vaadin 24.x, use the 1.x add-on version from the `v24` branch.)
 
 ```xml
 <dependency>
@@ -95,10 +95,11 @@ npm install date-time-combo-picker
 ></date-time-combo-picker>
 ```
 
-The `…-lumo.js` entrypoint registers the Lumo theme styles and then defines the
-element; import it (not the bare element module) unless you are providing your
-own theme. Events: `value-changed`, `opened-changed`, `invalid-changed`,
-`change` (all `detail.value`-style CustomEvents, matching Vaadin conventions).
+The component ships complete base styles and follows the application theme
+via the `--vaadin-*` design tokens (see [Styling](#styling)); the `…-lumo.js`
+entrypoint is a backwards-compatible alias for the element module. Events:
+`value-changed`, `opened-changed`, `invalid-changed`, `change` (all
+`detail.value`-style CustomEvents, matching Vaadin conventions).
 
 ## Format pattern reference
 
@@ -356,14 +357,12 @@ date-time-combo-picker::part(toggle-button) { color: purple; }
 | --- | --- |
 | `date-time-combo-picker` | standard field parts (`label`, `input-field`, `helper-text`, `error-message`, `required-indicator`, `clear-button`) + `toggle-button` |
 | `dtcp-overlay` | `overlay`, `content`, `backdrop` |
-| `dtcp-overlay-content` | `main`, `calendar-section`, `calendar-header`, `prev-month-button`, `next-month-button`, `month-year-label`, `year-grid`, `year-cell`, `year-cell-selected`, `calendar-footer`, `today-button`, `time-section`, `action-bar`, `ok-action-button`, `cancel-action-button` |
+| `dtcp-overlay-content` | `main`, `calendar-section`, `calendar-header`, `prev-month-button`, `next-month-button`, `month-year-label`, `year-grid`, `year-cell`, `year-cell-selected`, `calendar-footer`, `today-button`, `time-section`, `tabs-header`, `tabs`, `tab`, `date-tab`, `time-tab`, `tab-selected`, `action-bar`, `action-bar-spacer`, `ok-action-button`, `cancel-action-button` |
 | `dtcp-month-calendar` | `month-header`, `weekdays`, `weekday`, `week-number`, `date` (+ state parts `today`, `selected`, `focused`, `disabled`, `past`, `future`) |
 | `dtcp-time-columns` | `column`, `time-cell`, `time-cell-selected` |
-| `dtcp-time-clock` | `clock-readout`, `readout-segment`, `readout-segment-active`, `readout-separator`, `meridiem-toggle`, `meridiem-button`, `meridiem-button-selected`, `clock-face`, `clock-number`, `clock-number-inner`, `clock-number-selected`, `clock-hand` |
+| `dtcp-time-clock` | `clock-readout`, `readout-segment`, `readout-segment-active`, `readout-separator`, `meridiem-toggle`, `meridiem-button`, `meridiem-button-selected`, `clock-face`, `clock-number`, `clock-number-inner`, `clock-number-selected`, `clock-hand`, `clock-hand-label` |
 
-The selection color follows `--vaadin-selection-color` (falls back to
-`--lumo-primary-color`), like Vaadin's own pickers. The clock face size can be
-adjusted with `--_face-size` on `dtcp-time-clock`.
+The clock face size can be adjusted with `--_face-size` on `dtcp-time-clock`.
 
 ## Architecture notes
 
@@ -395,13 +394,13 @@ npm run build      # tsc -> dist/
 
 # Flow add-on + demo
 cd flow
-mvn jetty:run      # demo at http://localhost:8080 (also builds the npm package)
+mvn jetty:run      # demo at http://localhost:8080, with a Base/Lumo/Aura + dark theme switcher
 mvn test
 
 # End-to-end tests (starts the demo server itself)
 cd it
 npm install
-npm test           # VAADIN_VERSION=24.10.8 npm test for another platform version
+npm test           # VAADIN_VERSION=25.1.11 npm test for another platform version
 
 # Vaadin Directory package
 cd flow

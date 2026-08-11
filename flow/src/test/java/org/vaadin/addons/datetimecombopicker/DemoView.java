@@ -56,6 +56,9 @@ public class DemoView extends VerticalLayout {
         HorizontalLayout themeBar = new HorizontalLayout(theme, dark);
         themeBar.setDefaultVerticalComponentAlignment(
                 FlexComponent.Alignment.BASELINE);
+        themeBar.setWidthFull();
+        themeBar.setJustifyContentMode(
+                FlexComponent.JustifyContentMode.END);
         add(themeBar);
 
         // ------------------------------------------------ Format-driven UI

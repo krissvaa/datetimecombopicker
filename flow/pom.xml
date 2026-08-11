@@ -106,6 +106,15 @@
             </exclusions>
         </dependency>
         <dependency>
+            <!-- Vaadin 25 moved the dev-mode tooling (dev server, pre-compiled
+                 development bundle) out of vaadin-core; needed for the demo's
+                 plain `mvn jetty:run` (dev mode). Test scope: the demo runs
+                 with useTestScope, and the published jar is unaffected. -->
+            <groupId>com.vaadin</groupId>
+            <artifactId>vaadin-dev</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <scope>test</scope>

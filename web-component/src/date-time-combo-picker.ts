@@ -347,7 +347,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
         /* Wider default than the shared 12em: a date-time value (e.g.
            "15.07.2026 03:37") doesn't fit a single-field width. Apps
            setting --vaadin-field-default-width still control it. */
-        .date-time-combo-picker-container {
+        [part='input-field'] {
           width: var(--vaadin-field-default-width, 14em);
         }
 

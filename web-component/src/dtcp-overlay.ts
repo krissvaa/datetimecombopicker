@@ -39,18 +39,18 @@ const dtcpOverlayStyles = css`
     margin-bottom: var(--vaadin-gap-xs, 4px);
   }
 
-  /* Fullscreen (mobile): bottom sheet with a backdrop. The !important
-     flags beat the inline styles the V25 position mixin writes on the
-     host (top/left and flex justification for the anchored popup). */
+  /* Fullscreen (mobile): bottom sheet with a backdrop. The position mixin
+     is disabled in this state (see _updatePosition), so plain rules
+     suffice: no inline popup-anchoring styles compete with them. */
   :host([fullscreen]) {
-    top: 0 !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     display: flex;
     flex-direction: column;
-    align-items: stretch !important;
-    justify-content: flex-end !important;
+    align-items: stretch;
+    justify-content: flex-end;
     padding: 0;
   }
 
@@ -88,6 +88,27 @@ class DtcpOverlay extends PositionMixin(OverlayMixin(DirMixin(ThemableMixin(Poly
 
   static get styles() {
     return [overlayStyles, dtcpOverlayStyles];
+  }
+
+  /**
+   * Override a method from `PositionMixin`: while in fullscreen (mobile
+   * bottom sheet) mode the stylesheet owns the layout, so skip the popup
+   * anchoring — the mixin writes inline styles (top/left and flex
+   * justification) on the host that would misplace the sheet. Any inline
+   * styles written before entering fullscreen are dropped; the flip back
+   * to a popup re-runs the anchoring on the next update.
+   * @protected
+   * @override
+   */
+  _updatePosition() {
+    if (this.hasAttribute('fullscreen')) {
+      for (const property of ['top', 'left', 'bottom', 'right', 'justify-content', 'align-items']) {
+        this.style.removeProperty(property);
+      }
+      return;
+    }
+    // @ts-expect-error the mixin method is not exposed in the typings
+    super._updatePosition();
   }
 
   /**

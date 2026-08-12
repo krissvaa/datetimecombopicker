@@ -408,6 +408,20 @@ class DateTimeComboPickerTest {
     }
 
     @Test
+    void setI18n_nullListElement_failsFast() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        // e.g. an incomplete translation bundle looked up with Map::get;
+        // must fail here instead of rendering "undefined" client-side
+        DateTimeComboPickerI18n i18n = new DateTimeComboPickerI18n()
+                .setMonthNames(java.util.Arrays.asList("a", null, "c", "d",
+                        "e", "f", "g", "h", "i", "j", "k", "l"));
+        NullPointerException npe = org.junit.jupiter.api.Assertions
+                .assertThrows(NullPointerException.class,
+                        () -> picker.setI18n(i18n));
+        assertTrue(npe.getMessage().contains("monthNames"));
+    }
+
+    @Test
     void valueChangeListener_firesOnServerSideChange() {
         DateTimeComboPicker picker = new DateTimeComboPicker();
         LocalDateTime[] observed = new LocalDateTime[1];

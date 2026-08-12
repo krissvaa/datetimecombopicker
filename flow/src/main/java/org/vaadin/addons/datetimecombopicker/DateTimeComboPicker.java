@@ -825,7 +825,14 @@ public class DateTimeComboPicker
             List<String> values) {
         if (values != null) {
             ArrayNode array = JacksonUtils.createArrayNode();
-            values.forEach(array::add);
+            for (String value : values) {
+                // ArrayNode.add(String) maps null to a JSON null, which the
+                // web component would render as a blank/undefined label;
+                // fail here, at configuration time, instead
+                array.add(Objects.requireNonNull(value,
+                        () -> "i18n list '" + key
+                                + "' must not contain null elements"));
+            }
             json.set(key, array);
         }
     }

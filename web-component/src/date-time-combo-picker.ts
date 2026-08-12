@@ -22,6 +22,8 @@ import { LabelledInputController } from '@vaadin/field-base/src/labelled-input-c
 import { inputFieldShared } from '@vaadin/field-base/src/styles/input-field-shared-styles.js';
 import '@vaadin/component-base/src/styles/style-props.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
+import { LumoInjectionMixin } from '@vaadin/vaadin-themable-mixin/lumo-injection-mixin.js';
+import './lumo-adaptation.js';
 import {
   dateToParts,
   deriveTimeConfig,
@@ -97,7 +99,9 @@ const FULLSCREEN_MEDIA_QUERY = '(max-width: 450px), (max-height: 450px)';
  * @fires invalid-changed - Fired when the `invalid` property changes.
  * @fires change - Fired when the user commits a value change.
  */
-class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(PolylitMixin(LitElement)))) {
+class DateTimeComboPicker extends InputControlMixin(
+  ThemableMixin(ElementMixin(PolylitMixin(LumoInjectionMixin(LitElement)))),
+) {
   declare value: string;
   declare format: string;
   declare min: string | null;
@@ -356,6 +360,19 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     };
   }
 
+  /**
+   * Keep the base styles when Lumo modules are injected (see
+   * lumo-adaptation.ts): Lumo's field modules were written to replace
+   * Vaadin's own components' base styles wholesale, but this component's
+   * base styles carry structure Lumo knows nothing about. The adaptation
+   * module compensates for the overlaps (icon masks vs. font glyphs).
+   * @protected
+   * @override
+   */
+  static get lumoInjector() {
+    return { is: this.is, includeBaseStyles: true };
+  }
+
   static get styles() {
     return [
       inputFieldShared,
@@ -367,8 +384,21 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
           width: var(--vaadin-field-default-width, 14em);
         }
 
+        /* Icon rendering: with a Lumo theme active, injected Lumo modules
+           (see lumo-adaptation.ts) draw these buttons as font glyphs. A set
+           --lumo-icons-* glyph string is an invalid <image>/<background>,
+           which resets these properties (IACVT), clearing the base SVG
+           mask in the glyph's favor. Without Lumo the fallbacks apply. */
+        [part$='button']::before {
+          background: var(--lumo-icons-calendar, currentColor);
+        }
+
         [part~='toggle-button']::before {
-          mask-image: var(--_vaadin-icon-calendar);
+          mask-image: var(--lumo-icons-calendar, var(--_vaadin-icon-calendar));
+        }
+
+        [part~='clear-button']::before {
+          mask-image: var(--lumo-icons-cross, var(--_vaadin-icon-cross));
         }
       `,
     ];

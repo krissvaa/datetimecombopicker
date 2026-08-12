@@ -155,6 +155,19 @@ class DtcpOverlay extends PositionMixin(OverlayMixin(DirMixin(ThemableMixin(Poly
   }
 
   /**
+   * Usable viewport size: `window.inner*` includes the thickness of
+   * classic (space-consuming) scrollbars, which the popup cannot occupy —
+   * the same measure `PositionMixin` uses for its own clamping.
+   * @private
+   */
+  __viewportSize() {
+    return {
+      width: Math.min(window.innerWidth, document.documentElement.clientWidth),
+      height: Math.min(window.innerHeight, document.documentElement.clientHeight),
+    };
+  }
+
+  /**
    * In side mode the mixin still aligns the popup to the field's vertical
    * edge and clamps it there; shift it along the field instead so the full
    * popup fits in the viewport (top-aligned to the field when possible).
@@ -170,7 +183,8 @@ class DtcpOverlay extends PositionMixin(OverlayMixin(DirMixin(ThemableMixin(Poly
     const partStyle = getComputedStyle(overlayPart);
     const borders = parseFloat(partStyle.borderTopWidth) + parseFloat(partStyle.borderBottomWidth);
     const needed = (((this as any).requiredVerticalSpace as number) || overlayPart.scrollHeight) + borders;
-    const top = Math.max(margin, Math.min(target.getBoundingClientRect().top, window.innerHeight - needed - margin));
+    const viewportHeight = this.__viewportSize().height;
+    const top = Math.max(margin, Math.min(target.getBoundingClientRect().top, viewportHeight - needed - margin));
     this.style.justifyContent = 'flex-start';
     this.style.top = `${top}px`;
     this.style.removeProperty('bottom');
@@ -191,12 +205,12 @@ class DtcpOverlay extends PositionMixin(OverlayMixin(DirMixin(ThemableMixin(Poly
     }
     const margin = 8;
     const targetRect = target.getBoundingClientRect();
+    const viewport = this.__viewportSize();
     const neededHeight = (((this as any).requiredVerticalSpace as number) || overlayPart.offsetHeight) + margin;
     const width = overlayPart.offsetWidth + margin;
-    const fitsBelow = window.innerHeight - targetRect.bottom >= neededHeight;
+    const fitsBelow = viewport.height - targetRect.bottom >= neededHeight;
     const fitsAbove = targetRect.top >= neededHeight;
-    const sideFits =
-      width > margin && (window.innerWidth - targetRect.right >= width || targetRect.left >= width);
+    const sideFits = width > margin && (viewport.width - targetRect.right >= width || targetRect.left >= width);
     const side = !fitsBelow && !fitsAbove && sideFits;
     if (side !== (this as any).noHorizontalOverlap) {
       (this as any).noHorizontalOverlap = side;

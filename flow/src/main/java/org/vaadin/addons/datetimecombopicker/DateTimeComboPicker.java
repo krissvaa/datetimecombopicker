@@ -36,9 +36,9 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.shared.HasTooltip;
 
-import com.vaadin.flow.internal.JacksonUtils;
 
 import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 /**
@@ -787,7 +787,7 @@ public class DateTimeComboPicker
     }
 
     private static ObjectNode toJson(DateTimeComboPickerI18n i18n) {
-        ObjectNode json = JacksonUtils.createObjectNode();
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
         putStringArray(json, "monthNames", i18n.getMonthNames());
         putStringArray(json, "weekdays", i18n.getWeekdays());
         putStringArray(json, "weekdaysShort", i18n.getWeekdaysShort());
@@ -824,7 +824,7 @@ public class DateTimeComboPicker
     private static void putStringArray(ObjectNode json, String key,
             List<String> values) {
         if (values != null) {
-            ArrayNode array = JacksonUtils.createArrayNode();
+            ArrayNode array = JsonNodeFactory.instance.arrayNode();
             for (String value : values) {
                 // ArrayNode.add(String) maps null to a JSON null, which the
                 // web component would render as a blank/undefined label;

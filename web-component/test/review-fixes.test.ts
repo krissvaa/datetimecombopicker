@@ -48,6 +48,17 @@ describe('overlay outside-click ownership', () => {
     expect(picker.opened).to.be.false;
   });
 
+  it('closes the fullscreen sheet on a backdrop click', async () => {
+    const picker = await pickerFixture();
+    (picker as any)._fullscreen = true;
+    await nextFrame();
+    await open(picker);
+    const backdrop = picker.$.overlay.shadowRoot!.querySelector('[part="backdrop"]')!;
+    outsideClick(backdrop);
+    await nextFrame();
+    expect(picker.opened).to.be.false;
+  });
+
   it('keeps a staged selection when clicking into the field', async () => {
     const picker = await pickerFixture(html`<date-time-combo-picker .autoApply="${false}"></date-time-combo-picker>`);
     await open(picker);
@@ -60,6 +71,34 @@ describe('overlay outside-click ownership', () => {
     await nextFrame();
     expect(picker.opened).to.be.true;
     expect(content(picker).selectedDate!.getDate()).to.equal(20);
+  });
+});
+
+describe('fullscreen flip while open', () => {
+  it('drops stale inline anchoring when entering fullscreen and re-anchors on the way out', async () => {
+    const picker = await pickerFixture();
+    picker.value = '2026-07-15T13:05:00';
+    await open(picker);
+    const overlay = picker.$.overlay as HTMLElement & { _updatePosition(): void };
+    // Popup mode: the position mixin anchors with inline styles
+    overlay._updatePosition();
+    expect(overlay.style.top).to.not.equal('');
+
+    // Rotating across the threshold: the resize tick repositioned already
+    // (above); then the media query flips fullscreen — the stale inline
+    // anchoring must not beat the bottom-sheet stylesheet
+    (picker as any)._fullscreen = true;
+    await nextFrame();
+    expect(overlay.hasAttribute('fullscreen')).to.be.true;
+    expect(overlay.style.top).to.equal('');
+    expect(overlay.style.justifyContent).to.equal('');
+
+    // Flipping back must re-anchor to the field, not leave the popup
+    // floating at the default flex position
+    (picker as any)._fullscreen = false;
+    await nextFrame();
+    expect(overlay.hasAttribute('fullscreen')).to.be.false;
+    expect(overlay.style.top).to.not.equal('');
   });
 });
 

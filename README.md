@@ -16,12 +16,20 @@ no `ss` in the pattern → no seconds column, no `mm` → no minutes column,
 | --- | --- | --- |
 | ![Action bar](docs/img/action-bar.png) | ![Fullscreen](docs/img/fullscreen.png) | ![Analog clock](docs/img/clock.png) |
 
+The component ships Vaadin 25 base styles and follows the application theme
+through the `--vaadin-*` design tokens — the same picker with no theme, with
+Aura, and with Aura in dark mode (the shots above use Lumo):
+
+| Base (no theme) | Aura | Aura, dark |
+| --- | --- | --- |
+| ![Base](docs/img/theme-base.png) | ![Aura](docs/img/theme-aura.png) | ![Aura dark](docs/img/theme-aura-dark.png) |
+
 This is a mono-repo with two packages:
 
 | Package | Artifact | For |
 | --- | --- | --- |
 | [`web-component/`](web-component) | npm `date-time-combo-picker` | Any web app (Lit-based web component) |
-| [`flow/`](flow) | Maven `org.vaadin.addons:datetimecombopicker` | Vaadin Flow 24.4+ (Java 17) |
+| [`flow/`](flow) | Maven `org.vaadin.addons:datetimecombopicker` | Vaadin Flow 25.1+ (Java 21) |
 
 ## Vaadin Flow usage
 
@@ -29,7 +37,7 @@ This is a mono-repo with two packages:
 <dependency>
     <groupId>org.vaadin.addons</groupId>
     <artifactId>datetimecombopicker</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -137,6 +145,7 @@ Examples: `dd.MM.yyyy HH:mm` (default), `dd.MM.yyyy HH:mm:ss`, `M/d/yyyy h:mm a`
 | `setDateDisabledFunction(String)` | `isDateDisabled` (function property) | Disables individual dates; disabled dates fail validation |
 | `setInitialPosition(LocalDateTime)` | `initial-position` | Popup position and date/time defaults while the field is empty |
 | `setAutoApply(boolean)` | `auto-apply` | `true` applies selections immediately, without the OK/Cancel action bar (default: staged) |
+| `setCloseOnComplete(boolean)` | `close-on-complete` | With auto-apply: close the popup once the date and every visible time part have been picked (default off) |
 | `setOkButtonVisible` / `setCancelButtonVisible` | `ok-button-hidden` / `cancel-button-hidden` (inverted) | Hide a default action-bar button |
 | `addToActionBar(Component...)` | `slot="action-bar"` | Custom content at the start of the action bar |
 | `setOpened(boolean)` | `opened` | Opens/closes the popup |
@@ -172,26 +181,26 @@ mvn install -Pdirectory   # build the Vaadin Directory zip (target/*.zip)
 # Integration tests: drive the demo app in Chromium (starts jetty automatically)
 cd it
 npm install
-npm test           # VAADIN_VERSION=24.10.8 npm test to run against another platform
+npm test           # VAADIN_VERSION=25.2.6 npm test to run against another platform
 ```
 
 CI (GitHub Actions) runs the web-component tests, `mvn verify` against the minimum
-(24.4) and latest supported Vaadin platform, and the Playwright integration tests.
+(25.1) and latest supported Vaadin platform, and the Playwright integration tests.
 
 The Flow jar bundles the compiled web component under `META-INF/frontend`, so the
 add-on has no npm-publication dependency; bare imports (`lit`, `@vaadin/*`) resolve
-against the consuming application's Vaadin 24 platform packages.
+against the consuming application's Vaadin 25 platform packages.
 
 ## Architecture notes
 
 - The month calendar is **forked from `@vaadin/date-picker`**
-  ([vaadin/web-components](https://github.com/vaadin/web-components) v24.8.14,
+  ([vaadin/web-components](https://github.com/vaadin/web-components) v25.2.7,
   Apache-2.0) rather than imported from its private internals, so Vaadin minor
   updates cannot break it. See [`NOTICE`](NOTICE) for provenance and the list of
   forked files.
 - The popup is composed from the public `@vaadin/overlay` mixins, the field chrome
   from `@vaadin/field-base` — the same recipe Vaadin's own pickers use, so the
-  component inherits Lumo theming and form-field behavior.
+  component ships Vaadin 25 base styles: it follows the application theme (Lumo, Aura or custom) via the --vaadin-* design tokens and inherits standard form-field behavior.
 - The time selector is a set of free-scrolling digital-clock columns with
   click-to-select and keyboard support (`ArrowUp`/`ArrowDown`/`Home`/`End`).
   Alternatively, `time-view="clock"` renders an analog dial in the Material
@@ -225,7 +234,7 @@ This project stands on the shoulders of:
   Java component and this add-on needed a client-side calendar inside a single
   web-component popup.
 - [@vaadin/date-picker](https://github.com/vaadin/web-components/tree/main/packages/date-picker)
-  (Apache-2.0) — the forked month-calendar implementation and the Lumo theme CSS it
+  (Apache-2.0) — the forked month-calendar implementation and the theme CSS it
   ships with; also the reference for field/overlay composition.
 - [addon-starter-flow](https://github.com/vaadin/addon-starter-flow) — Maven
   conventions for Vaadin Directory add-ons (test-scope demo, directory assembly).

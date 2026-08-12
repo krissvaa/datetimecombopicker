@@ -1,6 +1,6 @@
 {
   "name": "date-time-combo-picker",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A combined date & time picker web component: a single field with one popup containing a calendar. The date-time format pattern drives which time parts are shown.",
   "license": "Apache-2.0",
   "author": "DateTimeComboPicker contributors",
@@ -38,17 +38,18 @@
   },
   "dependencies": {
     "@open-wc/dedupe-mixin": "^1.4.0",
-    "@vaadin/a11y-base": "^24.4.0",
-    "@vaadin/component-base": "^24.4.0",
-    "@vaadin/field-base": "^24.4.0",
-    "@vaadin/input-container": "^24.4.0",
-    "@vaadin/overlay": "^24.4.0",
-    "@vaadin/vaadin-lumo-styles": "^24.4.0",
-    "@vaadin/vaadin-themable-mixin": "^24.4.0",
+    "@vaadin/a11y-base": "~25.2.0",
+    "@vaadin/component-base": "~25.2.0",
+    "@vaadin/field-base": "~25.2.0",
+    "@vaadin/input-container": "~25.2.0",
+    "@vaadin/overlay": "~25.2.0",
+    "@vaadin/vaadin-themable-mixin": "~25.2.0",
     "lit": "^3.0.0"
   },
   "devDependencies": {
     "@open-wc/testing": "^4.0.0",
+    "@vaadin/aura": "~25.2.0",
+    "@vaadin/vaadin-lumo-styles": "~25.2.0",
     "@web/dev-server-esbuild": "^1.0.2",
     "@web/test-runner": "^0.19.0",
     "@web/test-runner-playwright": "^0.11.0",

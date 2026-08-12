@@ -139,7 +139,86 @@ describe('calendar keyboard navigation', () => {
     const overlay = picker.$.overlay;
     const fakeRelated = overlay.firstElementChild as Node; // overlay content
     expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: fakeRelated }))).to.be.false;
+    // Transient blur (focused popup element re-rendered away) keeps focus
+    expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: document.body }))).to.be.false;
+    expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: null }))).to.be.false;
+    // A real element outside the field and popup removes it
+    expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: document.head }))).to.be.true;
+    // When the popup is closed, any focusout blurs
+    picker.close();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: document.body }))).to.be.true;
+  });
+
+  it('moves focus to the time selector after selecting a date with Enter', async () => {
+    const picker = await openedPicker();
+    await content(picker).focusDateCell();
+    const cal = calendar(picker);
+    key(cal, 'ArrowRight');
+    // Let the roving calendar focus settle, like between real key presses
+    await nextFrame();
+    key(cal, 'Enter');
+    await nextFrame();
+    await nextFrame();
+    const columns = content(picker).shadowRoot!.querySelector('dtcp-time-columns')!;
+    const active = columns.shadowRoot!.activeElement as HTMLElement | null;
+    expect(active).to.not.be.null;
+    expect(active!.getAttribute('part')).to.include('column');
+  });
+
+  it('moves focus to the time selector when re-confirming the selected date', async () => {
+    const picker = await openedPicker();
+    await content(picker).focusDateCell();
+    const cal = calendar(picker);
+    key(cal, 'Enter'); // focused date === selected date, no date-selected fired
+    await nextFrame();
+    await nextFrame();
+    expect(picker.value).to.equal('2026-07-15T13:05:00');
+    const columns = content(picker).shadowRoot!.querySelector('dtcp-time-columns')!;
+    expect(columns.shadowRoot!.activeElement).to.not.be.null;
+  });
+
+  it('keeps focus in the calendar for a date-only format', async () => {
+    const picker = await fixture<DateTimeComboPicker>(
+      html`<date-time-combo-picker format="dd.MM.yyyy"></date-time-combo-picker>`,
+    );
+    await nextFrame();
+    picker.value = '2026-07-15T00:00:00';
+    picker.open();
+    await nextFrame();
+    await nextFrame();
+    await content(picker).focusDateCell();
+    const cal = calendar(picker);
+    key(cal, 'ArrowRight');
+    key(cal, 'Enter');
+    await nextFrame();
+    await nextFrame();
+    // No time selector to advance to; staged mode keeps the popup open
+    expect(picker.opened).to.be.true;
+    const timeSection = content(picker).shadowRoot!.querySelector<HTMLElement>('[part="time-section"]')!;
+    expect(timeSection.hidden).to.be.true;
+    expect(cal.shadowRoot!.activeElement, 'focus stays on a date cell').to.not.be.null;
+  });
+
+  it('commits typed text and closes when focus leaves the document', async () => {
+    const picker = await openedPicker();
+    picker.setAttribute('focused', '');
+    const input = picker.inputElement as HTMLInputElement;
+    input.value = '20.07.2026 10:15';
+    input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    // Focus moving into an iframe or the browser UI reports
+    // relatedTarget null, like a transient popup re-render — but the
+    // document loses focus, which the deferred check picks up
+    const originalHasFocus = document.hasFocus;
+    document.hasFocus = () => false;
+    try {
+      expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: null }))).to.be.false;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(picker.opened).to.be.false;
+      expect(picker.value).to.equal('2026-07-20T10:15:00');
+    } finally {
+      document.hasFocus = originalHasFocus;
+    }
   });
 });
 

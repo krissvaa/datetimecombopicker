@@ -50,13 +50,13 @@ immediately and the action bar is hidden.
 
 ## Using with Vaadin Flow
 
-Requires Vaadin 24.4+ and Java 17.
+Requires Vaadin 25.1+ and Java 21. (For Vaadin 24.x, use the 1.x add-on version from the `v24` branch.)
 
 ```xml
 <dependency>
     <groupId>org.vaadin.addons</groupId>
     <artifactId>datetimecombopicker</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -95,10 +95,11 @@ npm install date-time-combo-picker
 ></date-time-combo-picker>
 ```
 
-The `…-lumo.js` entrypoint registers the Lumo theme styles and then defines the
-element; import it (not the bare element module) unless you are providing your
-own theme. Events: `value-changed`, `opened-changed`, `invalid-changed`,
-`change` (all `detail.value`-style CustomEvents, matching Vaadin conventions).
+The component ships complete base styles and follows the application theme
+via the `--vaadin-*` design tokens (see [Styling](#styling)); the `…-lumo.js`
+entrypoint is a backwards-compatible alias for the element module. Events:
+`value-changed`, `opened-changed`, `invalid-changed`, `change` (all
+`detail.value`-style CustomEvents, matching Vaadin conventions).
 
 ## Format pattern reference
 
@@ -138,6 +139,7 @@ Java method ↔ element property/attribute:
 | `setDateDisabledFunction(String)` | `isDateDisabled` (function) | none | Disable individual dates — see below |
 | `setInitialPosition(LocalDateTime)` | `initial-position` | none | See below |
 | `setAutoApply(boolean)` | `auto-apply` | `false` | See [Action bar](#action-bar-autoapply) |
+| `setCloseOnComplete(boolean)` | `close-on-complete` | `false` | With auto-apply: close once the date and every visible time part were picked |
 | `setOkButtonVisible` / `setCancelButtonVisible` | `ok-button-hidden` / `cancel-button-hidden` (inverted) | visible | Hide a default action-bar button |
 | `addToActionBar(Component...)` | `slot="action-bar"` | — | Custom content at the start of the action bar |
 | `setAutoOpen(boolean)` | `auto-open-disabled` (inverted) | open | Whether clicking/typing in the field opens the popup |
@@ -193,7 +195,9 @@ the popup preview; **OK** applies the staged value and closes, while
 **Cancel**, <kbd>Escape</kbd> or clicking outside discards it. Button labels
 come from i18n (`ok`, `cancel`). Typed text still commits directly on
 <kbd>Enter</kbd>. `setAutoApply(true)` applies every selection immediately
-and hides the action bar.
+and hides the action bar; since that leaves no OK button to end the flow,
+`setCloseOnComplete(true)` makes the popup close on its own once the date
+and every visible time part have been picked.
 
 The action bar is customizable: `addToActionBar(new Button("Now", e -> ...))`
 places components at its start, before the Cancel/OK buttons
@@ -285,7 +289,7 @@ In the calendar:
 | <kbd>PageUp</kbd> / <kbd>PageDown</kbd> | previous / next month |
 | <kbd>Shift</kbd>+<kbd>PageUp</kbd> / <kbd>PageDown</kbd> | previous / next year |
 | <kbd>Home</kbd> / <kbd>End</kbd> | first / last day of the month |
-| <kbd>Enter</kbd> / <kbd>Space</kbd> | select the focused date |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> | select the focused date and move focus to the time selector (when the format has time parts) |
 | <kbd>Escape</kbd> | close the popup, focus returns to the field |
 
 In the year grid (opened from the month-year header): arrows move by one
@@ -317,9 +321,33 @@ layout instead: the calendar above a centered time selector.
 
 ## Styling
 
-The component uses the Lumo theme and inherits the standard Vaadin field
-styling (label, helper, error message, required indicator). Custom styling
-uses shadow parts:
+The component follows the Vaadin 25 styling model: it ships complete
+**base styles** built on the `--vaadin-*` design tokens, so it renders a
+usable monochrome look with no theme, and adopts the application theme's
+tokens automatically (typography, colors, radii, focus ring).
+
+The **selection accent** (selected date/time, OK button, active tab,
+Today) follows the theme's date-picker accent so the popup matches the
+app's date pickers out of the box:
+
+1. `--dtcp-selection-background` / `--dtcp-selection-color` — explicit
+   override, highest precedence;
+2. `--vaadin-date-picker-date-selected-background` / `-color` — set by
+   Aura and by custom themes;
+3. `--lumo-primary-color` / `--lumo-primary-contrast-color` — set by the
+   Lumo theme;
+4. the monochrome base (`--vaadin-text-color` on
+   `--vaadin-background-color`) otherwise.
+
+```css
+/* Give just this component a custom accent */
+date-time-combo-picker, dtcp-overlay {
+  --dtcp-selection-background: #7c3aed;
+  --dtcp-selection-color: white;
+}
+```
+
+Custom styling of individual elements uses shadow parts:
 
 ```css
 date-time-combo-picker::part(toggle-button) { color: purple; }
@@ -329,14 +357,12 @@ date-time-combo-picker::part(toggle-button) { color: purple; }
 | --- | --- |
 | `date-time-combo-picker` | standard field parts (`label`, `input-field`, `helper-text`, `error-message`, `required-indicator`, `clear-button`) + `toggle-button` |
 | `dtcp-overlay` | `overlay`, `content`, `backdrop` |
-| `dtcp-overlay-content` | `main`, `calendar-section`, `calendar-header`, `prev-month-button`, `next-month-button`, `month-year-label`, `year-grid`, `year-cell`, `year-cell-selected`, `calendar-footer`, `today-button`, `time-section`, `action-bar`, `ok-action-button`, `cancel-action-button` |
+| `dtcp-overlay-content` | `main`, `calendar-section`, `calendar-header`, `prev-month-button`, `next-month-button`, `month-year-label`, `year-grid`, `year-cell`, `year-cell-selected`, `calendar-footer`, `today-button`, `time-section`, `tabs-header`, `tabs`, `tab`, `date-tab`, `time-tab`, `tab-selected`, `action-bar`, `action-bar-spacer`, `ok-action-button`, `cancel-action-button` |
 | `dtcp-month-calendar` | `month-header`, `weekdays`, `weekday`, `week-number`, `date` (+ state parts `today`, `selected`, `focused`, `disabled`, `past`, `future`) |
 | `dtcp-time-columns` | `column`, `time-cell`, `time-cell-selected` |
-| `dtcp-time-clock` | `clock-readout`, `readout-segment`, `readout-segment-active`, `readout-separator`, `meridiem-toggle`, `meridiem-button`, `meridiem-button-selected`, `clock-face`, `clock-number`, `clock-number-inner`, `clock-number-selected`, `clock-hand` |
+| `dtcp-time-clock` | `clock-readout`, `readout-segment`, `readout-segment-active`, `readout-separator`, `meridiem-toggle`, `meridiem-button`, `meridiem-button-selected`, `clock-face`, `clock-number`, `clock-number-inner`, `clock-number-selected`, `clock-hand`, `clock-hand-label` |
 
-The selection color follows `--vaadin-selection-color` (falls back to
-`--lumo-primary-color`), like Vaadin's own pickers. The clock face size can be
-adjusted with `--_face-size` on `dtcp-time-clock`.
+The clock face size can be adjusted with `--_face-size` on `dtcp-time-clock`.
 
 ## Architecture notes
 
@@ -346,15 +372,18 @@ adjusted with `--_face-size` on `dtcp-time-clock`.
   the consuming app's Vaadin platform packages, so the add-on works without
   the npm package being installed.
 - **The month calendar is forked**, not imported, from `@vaadin/date-picker`
-  (vaadin/web-components v24.8.14, Apache-2.0) — see `NOTICE` for provenance.
+  (vaadin/web-components v25.2.7, Apache-2.0) — see `NOTICE` for provenance.
   This keeps the add-on immune to changes in Vaadin's private internals; the
   cost is manually syncing upstream fixes.
 - The popup composes the public `@vaadin/overlay` mixins; the field chrome
   comes from `@vaadin/field-base` — the same building blocks Vaadin's own
   pickers use.
-- One deliberate deviation from upstream: the forked calendar's `render()` is
-  defensive about not-yet-computed properties, because Vaadin 24.4's
-  `PolylitMixin` runs computed-property observers only after the first render.
+- Deliberate deviations from upstream in the forked calendar: `render()`
+  falls back to empty arrays for not-yet-computed properties (upstream does
+  not guard), date cells get `isolation: isolate` so their `z-index: -1`
+  backing shape stays inside the cell when the overlay renders in the field's
+  shadow root, and a small appended style layer routes the selected/today
+  accent through `--dtcp-selection-background`/`--dtcp-selection-color`.
 
 ## Development
 
@@ -368,13 +397,13 @@ npm run build      # tsc -> dist/
 
 # Flow add-on + demo
 cd flow
-mvn jetty:run      # demo at http://localhost:8080 (also builds the npm package)
+mvn jetty:run      # demo at http://localhost:8080, with a Base/Lumo/Aura + dark theme switcher
 mvn test
 
 # End-to-end tests (starts the demo server itself)
 cd it
 npm install
-npm test           # VAADIN_VERSION=24.10.8 npm test for another platform version
+npm test           # VAADIN_VERSION=25.2.6 npm test for another platform version
 
 # Vaadin Directory package
 cd flow
@@ -383,7 +412,7 @@ mvn install -Pdirectory    # -> target/datetimecombopicker-<version>.zip
 
 Releases: `./release.sh <version>` sets both versions, runs all builds and
 tests, publishes to npm and produces the Directory zip. CI (GitHub Actions)
-runs the web-component tests, `mvn verify` against the minimum (24.4) and a
+runs the web-component tests, `mvn verify` against the minimum (25.1) and a
 current Vaadin version, and the Playwright integration tests.
 
 ## Limitations

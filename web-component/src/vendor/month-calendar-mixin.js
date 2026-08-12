@@ -1,19 +1,16 @@
 /**
  * @license
- * Copyright (c) 2016 - 2025 Vaadin Ltd.
+ * Copyright (c) 2016 - 2026 Vaadin Ltd.
  * This program is available under Apache License Version 2.0, available at https://vaadin.com/license/
  *
- * Forked for DateTimeComboPicker from vaadin/web-components v24.8.14
- * (packages/date-picker/src/vaadin-month-calendar-mixin.js). Near-verbatim; imports adjusted. See NOTICE.
+ * Forked for DateTimeComboPicker from vaadin/web-components v25.2.7
+ * (packages/date-picker/src/vaadin-month-calendar-mixin.js). Near-verbatim;
+ * imports adjusted. See NOTICE.
  */
 import { FocusMixin } from '@vaadin/a11y-base/src/focus-mixin.js';
 import { addListener } from '@vaadin/component-base/src/gestures.js';
 import { dateAllowed, dateEquals, getISOWeekNumber, normalizeDate } from './date-picker-helper.js';
 
-/**
- * @polymerMixin
- * @mixes FocusMixin
- */
 export const MonthCalendarMixin = (superClass) =>
   class MonthCalendarMixinClass extends FocusMixin(superClass) {
     static get properties() {
@@ -247,7 +244,7 @@ export const MonthCalendarMixin = (superClass) =>
     /** @protected */
     __computeShowWeekSeparator(showWeekNumbers, i18n) {
       // Currently only supported for locales that start the week on Monday.
-      return showWeekNumbers && i18n && i18n.firstDayOfWeek === 1;
+      return showWeekNumbers && i18n?.firstDayOfWeek === 1;
     }
 
     /** @protected */

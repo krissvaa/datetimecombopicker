@@ -19,9 +19,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -39,7 +41,26 @@ public class DemoView extends VerticalLayout {
         setSpacing(true);
         setPadding(true);
 
-        add(new H1("DateTimeComboPicker demo"));
+        // Header row: title on the left, theme switcher on the right.
+        // Vaadin 25 themes are plain stylesheets, swappable at runtime. The
+        // CSS files are copied into src/main/webapp/demo-themes by the build.
+        Select<String> theme = new Select<>();
+        theme.setAriaLabel("Theme");
+        theme.setItems("Base", "Lumo", "Aura");
+        theme.setValue("Base");
+        Checkbox dark = new Checkbox("Dark");
+        theme.addValueChangeListener(e -> applyTheme(theme, dark));
+        dark.addValueChangeListener(e -> applyTheme(theme, dark));
+        HorizontalLayout themeBar = new HorizontalLayout(theme, dark);
+        themeBar.setDefaultVerticalComponentAlignment(
+                FlexComponent.Alignment.CENTER);
+        HorizontalLayout header = new HorizontalLayout(
+                new H1("DateTimeComboPicker demo"), themeBar);
+        header.setWidthFull();
+        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        header.setDefaultVerticalComponentAlignment(
+                FlexComponent.Alignment.CENTER);
+        add(header);
 
         // ------------------------------------------------ Format-driven UI
         add(new H2("Format-driven fields"));
@@ -107,8 +128,9 @@ public class DemoView extends VerticalLayout {
         addWithValueOutput(weekdaysOnly);
 
         DateTimeComboPicker instant = new DateTimeComboPicker(
-                "Instant apply (setAutoApply(true))");
+                "Instant apply, closes when complete");
         instant.setAutoApply(true);
+        instant.setCloseOnComplete(true);
         addWithValueOutput(instant);
 
         DateTimeComboPicker customActions = new DateTimeComboPicker(
@@ -187,6 +209,27 @@ public class DemoView extends VerticalLayout {
         binderRow.setDefaultVerticalComponentAlignment(
                 FlexComponent.Alignment.BASELINE);
         add(binderRow, binderStatus);
+    }
+
+    private void applyTheme(Select<String> theme, Checkbox dark) {
+        String href = switch (theme.getValue()) {
+        case "Lumo" -> "demo-themes/@vaadin/vaadin-lumo-styles/dist/lumo.css";
+        case "Aura" -> "demo-themes/@vaadin/aura/aura.css";
+        default -> null;
+        };
+        getElement().executeJs(
+                """
+                        document.getElementById('demo-theme')?.remove();
+                        if ($0) {
+                          const link = document.createElement('link');
+                          link.id = 'demo-theme';
+                          link.rel = 'stylesheet';
+                          link.href = $0;
+                          document.head.appendChild(link);
+                        }
+                        document.documentElement.style.colorScheme = $1 ? 'dark' : '';
+                        """,
+                href, dark.getValue());
     }
 
     private void addWithValueOutput(DateTimeComboPicker picker) {

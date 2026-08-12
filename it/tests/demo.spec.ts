@@ -209,9 +209,12 @@ test('fullscreen bottom sheet on small viewports', async ({ page }) => {
   const overlay = openOverlay(page);
   await expect(overlay).toHaveAttribute('fullscreen', '');
   await expect(overlay.locator('[part="backdrop"]')).toBeVisible();
-  // The sheet spans the full viewport width
+  // The sheet spans the full viewport width and is anchored to the bottom
+  // (the V25 position mixin writes inline popup-anchoring styles that the
+  // fullscreen state must override)
   const box = (await overlay.locator('[part="overlay"]').boundingBox())!;
   expect(box.width).toBe(400);
+  expect(Math.round(box.y + box.height)).toBe(700);
 });
 
 test('analog clock: tap an hour, auto-advance, tap minutes', async ({ page }) => {

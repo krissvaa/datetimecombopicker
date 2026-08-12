@@ -8,6 +8,7 @@
  * modeled on vaadin-date-picker.
  */
 import { css, html, LitElement, nothing } from 'lit';
+import '@vaadin/component-base/src/styles/style-props.js';
 import { defineCustomElement } from '@vaadin/component-base/src/define.js';
 import { PolylitMixin } from '@vaadin/component-base/src/polylit-mixin.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
@@ -432,6 +433,303 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
 
       [hidden] {
         display: none !important;
+      }
+
+      /* ------------------------------------------------------------------
+         Visual layer (Vaadin 25 base-styles model): global --vaadin-*
+         tokens with the monochrome base look as fallback. The selection
+         accent follows the app theme's date-picker accent so the popup
+         matches the surrounding theme (Lumo, Aura or custom); override
+         with --dtcp-selection-background / --dtcp-selection-color. */
+      :host {
+        --_accent-bg: var(
+          --dtcp-selection-background,
+          var(--vaadin-date-picker-date-selected-background, var(--lumo-primary-color, var(--vaadin-text-color)))
+        );
+        --_accent-fg: var(
+          --dtcp-selection-color,
+          var(--vaadin-date-picker-date-selected-color, var(--lumo-primary-contrast-color, var(--vaadin-background-color)))
+        );
+        font-size: 1rem;
+        color: var(--vaadin-text-color);
+      }
+
+      [part='main'] {
+        /* Height of the popup: month grid rows + header + weekdays + footer */
+        height: calc(2.25rem * 9.5);
+        flex: none;
+      }
+
+      [part='action-bar'] {
+        border-top: 1px solid var(--vaadin-border-color-secondary);
+        padding: var(--vaadin-padding-s, 0.5rem) var(--vaadin-padding-m, 1rem);
+        gap: var(--vaadin-gap-s, 0.5rem);
+      }
+
+      [part$='-action-button'] {
+        height: 1.875rem;
+        padding: 0 var(--vaadin-padding-m, 1rem);
+        font-size: 0.875rem;
+        font-weight: 500;
+        border-radius: var(--vaadin-radius-m);
+        cursor: var(--vaadin-clickable-cursor);
+      }
+
+      [part='cancel-action-button'] {
+        color: var(--vaadin-text-color-secondary);
+      }
+
+      [part='cancel-action-button']:hover {
+        background-color: var(--vaadin-background-container);
+      }
+
+      [part='ok-action-button'] {
+        color: var(--_accent-fg);
+        background-color: var(--_accent-bg);
+      }
+
+      [part='ok-action-button']:hover {
+        filter: brightness(1.1);
+      }
+
+      /* Fullscreen (mobile): calendar stacked above centered time columns */
+      :host([fullscreen]) [part='main'] {
+        height: auto;
+        width: 100%;
+      }
+
+      :host([fullscreen]) [part='calendar-section'] {
+        margin-inline: auto;
+        /* Fixed height (like the desktop popup) so 5- and 6-row months don't
+           resize the sheet, keeping the prev/next buttons in place. The extra
+           bottom padding keeps the Today button off the sheet/action-bar edge. */
+        height: calc(2.25rem * 9.5 + 12px);
+        padding-bottom: 20px;
+      }
+
+      :host([fullscreen]) [part='time-section'] {
+        height: calc(1.875rem * 5);
+      }
+
+      /* Calendar/time separator; none needed for time-only formats */
+      :host([fullscreen]) [part='calendar-section']:not([hidden]) + [part='time-section'] {
+        border-top: 1px solid var(--vaadin-border-color-secondary);
+      }
+
+      /* The clock sizes itself; the fixed height above is for the columns */
+      :host([fullscreen]) [part='time-section']:has(dtcp-time-clock) {
+        height: auto;
+      }
+
+      /* Tabbed fullscreen layout: formatted-value header, Date/Time tabs,
+         one section at a time inside a fixed-height main */
+      [part='tabs-header'] {
+        /* 16px padding + the font's ~4px leading = ~20px visual gap */
+        padding: var(--vaadin-padding-m, 1rem);
+        font-size: 1.375rem;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        color: var(--vaadin-text-color);
+      }
+
+      [part~='tab'] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--vaadin-gap-xs, 0.25rem);
+        height: 2.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--vaadin-text-color-secondary);
+        cursor: var(--vaadin-clickable-cursor);
+        border-bottom: 2px solid var(--vaadin-border-color-secondary);
+      }
+
+      [part~='tab']::before {
+        content: '';
+        display: block;
+        width: var(--vaadin-icon-size, 1.25rem);
+        height: var(--vaadin-icon-size, 1.25rem);
+        background: currentColor;
+        mask-size: 100%;
+        mask-position: 50%;
+        mask-repeat: no-repeat;
+      }
+
+      [part~='date-tab']::before {
+        mask-image: var(--_vaadin-icon-calendar);
+      }
+
+      [part~='time-tab']::before {
+        mask-image: var(--_vaadin-icon-clock);
+      }
+
+      [part~='tab-selected'] {
+        color: var(--vaadin-text-color);
+        border-bottom-color: var(--_accent-bg);
+      }
+
+      :host([fullscreen][tabs]) [part='main'] {
+        /* Both tab panels use the calendar's fixed height so switching
+           tabs does not resize the sheet */
+        height: calc(2.25rem * 9.5 + 12px);
+      }
+
+      :host([fullscreen][tabs]) [part='time-section'] {
+        height: 100%;
+        align-items: center;
+      }
+
+      [part='calendar-section'] {
+        width: calc(2.25rem * 7 + 0.25rem * 2 + 1rem * 2);
+        padding: var(--vaadin-padding-s, 0.5rem) var(--vaadin-padding-m, 1rem);
+        box-sizing: border-box;
+      }
+
+      [part='calendar-header'] {
+        padding: 0.25rem 0 0.5rem;
+      }
+
+      [part='month-year-label'] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--vaadin-text-color);
+        font-size: 1.125rem;
+        font-weight: 500;
+        line-height: 1;
+        height: 1.875rem;
+        border-radius: var(--vaadin-radius-m);
+        cursor: var(--vaadin-clickable-cursor);
+      }
+
+      [part='month-year-label']:hover {
+        background-color: var(--vaadin-background-container);
+      }
+
+      [part='month-year-label']::after {
+        content: '';
+        display: block;
+        width: 1rem;
+        height: 1rem;
+        background: var(--vaadin-text-color-secondary);
+        mask-image: var(--_vaadin-icon-chevron-down);
+        mask-size: 100%;
+        mask-position: 50%;
+        mask-repeat: no-repeat;
+        margin-inline-start: var(--vaadin-gap-xs, 0.25rem);
+        transition: transform 0.1s;
+      }
+
+      [part='month-year-label'][aria-expanded='true']::after {
+        transform: rotate(180deg);
+      }
+
+      [part='year-grid'] {
+        gap: var(--vaadin-gap-xs, 0.25rem);
+        padding: 0.5rem 0.25rem;
+        scrollbar-width: none;
+      }
+
+      [part='year-grid']::-webkit-scrollbar {
+        display: none;
+      }
+
+      [part~='year-cell'] {
+        height: 2.25rem;
+        font-size: 1rem;
+        border-radius: var(--vaadin-radius-m);
+        cursor: var(--vaadin-clickable-cursor);
+        font-variant-numeric: tabular-nums;
+      }
+
+      [part~='year-cell']:hover {
+        background-color: var(--vaadin-background-container);
+      }
+
+      [part~='year-cell-selected'],
+      [part~='year-cell-selected']:hover {
+        background-color: var(--_accent-bg);
+        color: var(--_accent-fg);
+      }
+
+      [part$='month-button'] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.875rem;
+        height: 1.875rem;
+        color: var(--vaadin-text-color-secondary);
+        border-radius: var(--vaadin-radius-m);
+        cursor: var(--vaadin-clickable-cursor);
+      }
+
+      [part$='month-button']:hover {
+        color: var(--vaadin-text-color);
+        background-color: var(--vaadin-background-container);
+      }
+
+      [part$='month-button']::before {
+        content: '';
+        display: block;
+        width: var(--vaadin-icon-size, 1.25rem);
+        height: var(--vaadin-icon-size, 1.25rem);
+        background: currentColor;
+        mask-image: var(--_vaadin-icon-chevron-right);
+        mask-size: 100%;
+        mask-position: 50%;
+        mask-repeat: no-repeat;
+      }
+
+      [part='prev-month-button']::before {
+        transform: scaleX(-1);
+      }
+
+      :host([dir='rtl']) [part='prev-month-button']::before {
+        transform: none;
+      }
+
+      :host([dir='rtl']) [part='next-month-button']::before {
+        transform: scaleX(-1);
+      }
+
+      [part='calendar-footer'] {
+        display: flex;
+        justify-content: center;
+        padding-top: var(--vaadin-gap-xs, 0.25rem);
+      }
+
+      [part='today-button'] {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        padding: 0 var(--vaadin-padding-m, 1rem);
+        height: 1.875rem;
+        font: inherit;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--_accent-bg);
+        border-radius: var(--vaadin-radius-m);
+        cursor: var(--vaadin-clickable-cursor);
+      }
+
+      [part='today-button']:hover {
+        background-color: var(--vaadin-background-container);
+      }
+
+      [part='today-button']:disabled {
+        color: var(--vaadin-text-color-disabled);
+        cursor: var(--vaadin-disabled-cursor);
+      }
+
+      [part='time-section'] {
+        padding: var(--vaadin-padding-s, 0.5rem) 0.25rem;
+        box-sizing: border-box;
+      }
+
+      /* Calendar/time separator; none needed for time-only formats */
+      :host(:not([fullscreen])) [part='calendar-section']:not([hidden]) + [part='time-section'] {
+        border-inline-start: 1px solid var(--vaadin-border-color-secondary);
       }
     `;
   }
@@ -869,6 +1167,27 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     await this.focusDateCell();
   }
 
+  /**
+   * After a keyboard date selection, move focus onto the time selector so
+   * the time parts can be picked without tabbing — the keyboard
+   * counterpart of the analog clock's pointer auto-advance. Skipped when
+   * the format has no time parts and when the selection just closed the
+   * popup (autoApply + closeOnComplete). In the mobile tabs layout this
+   * also switches to the time tab, like a date tap does.
+   * @private
+   */
+  async __focusTimeAfterDateSelection() {
+    const overlay = this.parentElement as { opened?: boolean } | null;
+    if (!this.timeConfig.hasTime || overlay?.opened === false) {
+      return;
+    }
+    if (this.__tabsActive()) {
+      this.__setActiveTab('time');
+    }
+    await this.updateComplete;
+    this.focusTimeColumns();
+  }
+
   /** @private */
   __onCalendarKeyDown(event: KeyboardEvent) {
     const rtl = getComputedStyle(this).direction === 'rtl';
@@ -908,12 +1227,12 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       case 'Enter':
       case ' ': {
         const date = this.focusedDate;
-        if (
-          date &&
-          dateAllowed(date, this.minDate, this.maxDate, this.isDateDisabled) &&
-          !dateEquals(date, this.selectedDate)
-        ) {
-          this.dispatchEvent(new CustomEvent('date-selected', { detail: { date } }));
+        if (date && dateAllowed(date, this.minDate, this.maxDate, this.isDateDisabled)) {
+          if (!dateEquals(date, this.selectedDate)) {
+            this.dispatchEvent(new CustomEvent('date-selected', { detail: { date } }));
+          }
+          // Confirming the already-selected date advances too
+          this.__focusTimeAfterDateSelection();
         }
         break;
       }

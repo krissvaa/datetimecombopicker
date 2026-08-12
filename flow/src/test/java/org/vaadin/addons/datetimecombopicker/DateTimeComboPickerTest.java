@@ -186,6 +186,15 @@ class DateTimeComboPickerTest {
     }
 
     @Test
+    void closeOnComplete_disabledByDefault_mapsToProperty() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        assertFalse(picker.isCloseOnComplete());
+        picker.setCloseOnComplete(true);
+        assertTrue(picker.isCloseOnComplete());
+        assertTrue(picker.getElement().getProperty("closeOnComplete", false));
+    }
+
+    @Test
     void actionBarButtons_visibleByDefault_mapToInvertedProperties() {
         DateTimeComboPicker picker = new DateTimeComboPicker();
         assertTrue(picker.isOkButtonVisible());
@@ -396,6 +405,20 @@ class DateTimeComboPickerTest {
                 .assertThrows(NullPointerException.class,
                         () -> picker.setI18n(null));
         assertTrue(npe.getMessage().contains("i18n"));
+    }
+
+    @Test
+    void setI18n_nullListElement_failsFast() {
+        DateTimeComboPicker picker = new DateTimeComboPicker();
+        // e.g. an incomplete translation bundle looked up with Map::get;
+        // must fail here instead of rendering "undefined" client-side
+        DateTimeComboPickerI18n i18n = new DateTimeComboPickerI18n()
+                .setMonthNames(java.util.Arrays.asList("a", null, "c", "d",
+                        "e", "f", "g", "h", "i", "j", "k", "l"));
+        NullPointerException npe = org.junit.jupiter.api.Assertions
+                .assertThrows(NullPointerException.class,
+                        () -> picker.setI18n(i18n));
+        assertTrue(npe.getMessage().contains("monthNames"));
     }
 
     @Test

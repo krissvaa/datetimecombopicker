@@ -36,9 +36,10 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.shared.HasTooltip;
 
-import elemental.json.Json;
-import elemental.json.JsonArray;
-import elemental.json.JsonObject;
+
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * A combined date and time picker: a single field with a {@link LocalDateTime}
@@ -466,6 +467,30 @@ public class DateTimeComboPicker
     }
 
     /**
+     * Sets whether the popup closes automatically once every part offered
+     * by the format — the date and each visible time part — has been picked
+     * since the popup opened. Meant for {@linkplain #setAutoApply(boolean)
+     * auto-apply} mode, which has no OK button to end the flow; without
+     * auto-apply this option has no effect. Disabled by default.
+     *
+     * @param closeOnComplete
+     *            {@code true} to close the popup when the selection is
+     *            complete
+     */
+    public void setCloseOnComplete(boolean closeOnComplete) {
+        getElement().setProperty("closeOnComplete", closeOnComplete);
+    }
+
+    /**
+     * Gets whether the popup closes automatically on a complete selection.
+     *
+     * @return {@code true} if close-on-complete is enabled
+     */
+    public boolean isCloseOnComplete() {
+        return getElement().getProperty("closeOnComplete", false);
+    }
+
+    /**
      * Sets whether the OK button of the action bar is visible. Visible by
      * default. Hiding both default buttons leaves only content added with
      * {@link #addToActionBar(Component...)}.
@@ -761,8 +786,8 @@ public class DateTimeComboPicker
         return i18n;
     }
 
-    private static JsonObject toJson(DateTimeComboPickerI18n i18n) {
-        JsonObject json = Json.createObject();
+    private static ObjectNode toJson(DateTimeComboPickerI18n i18n) {
+        ObjectNode json = JsonNodeFactory.instance.objectNode();
         putStringArray(json, "monthNames", i18n.getMonthNames());
         putStringArray(json, "weekdays", i18n.getWeekdays());
         putStringArray(json, "weekdaysShort", i18n.getWeekdaysShort());
@@ -790,20 +815,25 @@ public class DateTimeComboPicker
         return json;
     }
 
-    private static void putString(JsonObject json, String key, String value) {
+    private static void putString(ObjectNode json, String key, String value) {
         if (value != null) {
             json.put(key, value);
         }
     }
 
-    private static void putStringArray(JsonObject json, String key,
+    private static void putStringArray(ObjectNode json, String key,
             List<String> values) {
         if (values != null) {
-            JsonArray array = Json.createArray();
-            for (int i = 0; i < values.size(); i++) {
-                array.set(i, values.get(i));
+            ArrayNode array = JsonNodeFactory.instance.arrayNode();
+            for (String value : values) {
+                // ArrayNode.add(String) maps null to a JSON null, which the
+                // web component would render as a blank/undefined label;
+                // fail here, at configuration time, instead
+                array.add(Objects.requireNonNull(value,
+                        () -> "i18n list '" + key
+                                + "' must not contain null elements"));
             }
-            json.put(key, array);
+            json.set(key, array);
         }
     }
 }

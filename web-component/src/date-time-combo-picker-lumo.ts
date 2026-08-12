@@ -3,10 +3,11 @@
  * Copyright (c) 2026 DateTimeComboPicker contributors.
  * This program is available under Apache License Version 2.0.
  *
- * Lumo-themed entrypoint: registers the Lumo styles and then defines
- * `<date-time-combo-picker>`. This is the module to import in Vaadin apps.
+ * Backwards-compatible entrypoint. Since the Vaadin 25 port the component
+ * ships complete base styles (no separate Lumo module): the visual accent
+ * follows the application theme via the `--vaadin-*` design tokens, so
+ * this module is identical to importing `date-time-combo-picker.js`.
  */
-import './styles/dtcp-lumo-styles.js';
 import './date-time-combo-picker.js';
 
 export * from './date-time-combo-picker.js';

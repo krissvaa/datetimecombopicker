@@ -35,3 +35,5 @@ it/playwright-report/
 *.iml
 .vscode/
 .DS_Store
+flow/src/main/webapp/demo-themes/
+.java-version

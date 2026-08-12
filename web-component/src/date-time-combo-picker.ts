@@ -20,7 +20,10 @@ import { InputControlMixin } from '@vaadin/field-base/src/input-control-mixin.js
 import { InputController } from '@vaadin/field-base/src/input-controller.js';
 import { LabelledInputController } from '@vaadin/field-base/src/labelled-input-controller.js';
 import { inputFieldShared } from '@vaadin/field-base/src/styles/input-field-shared-styles.js';
+import '@vaadin/component-base/src/styles/style-props.js';
 import { ThemableMixin } from '@vaadin/vaadin-themable-mixin/vaadin-themable-mixin.js';
+import { LumoInjectionMixin } from '@vaadin/vaadin-themable-mixin/lumo-injection-mixin.js';
+import './lumo-adaptation.js';
 import {
   dateToParts,
   deriveTimeConfig,
@@ -77,6 +80,7 @@ const FULLSCREEN_MEDIA_QUERY = '(max-width: 450px), (max-height: 450px)';
  * `isDateDisabled` | `({day, month, year}) => boolean` (0-based month) disabling dates | -
  * `initialPosition` (`initial-position`) | ISO date(-time) shown and used as defaults when empty | -
  * `autoApply` (`auto-apply`) | `true` applies selections immediately without the OK/Cancel action bar | `false`
+ * `closeOnComplete` (`close-on-complete`) | With `autoApply`: close once the date and every visible time part have been picked | `false`
  * `okButtonHidden` / `cancelButtonHidden` (`ok-button-hidden`/`cancel-button-hidden`) | Hide a default action-bar button | `false`
  * `opened` (`opened`) | Whether the popup is open | `false`
  * `autoOpenDisabled` (`auto-open-disabled`) | Only open the popup from the toggle button | `false`
@@ -95,7 +99,9 @@ const FULLSCREEN_MEDIA_QUERY = '(max-width: 450px), (max-height: 450px)';
  * @fires invalid-changed - Fired when the `invalid` property changes.
  * @fires change - Fired when the user commits a value change.
  */
-class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(PolylitMixin(LitElement)))) {
+class DateTimeComboPicker extends InputControlMixin(
+  ThemableMixin(ElementMixin(PolylitMixin(LumoInjectionMixin(LitElement)))),
+) {
   declare value: string;
   declare format: string;
   declare min: string | null;
@@ -110,6 +116,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   declare isDateDisabled: IsDateDisabledFn | undefined;
   declare initialPosition: string | null;
   declare autoApply: boolean;
+  declare closeOnComplete: boolean;
   declare okButtonHidden: boolean;
   declare cancelButtonHidden: boolean;
   declare timeView: TimeViewKind;
@@ -129,6 +136,8 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   declare $: Record<string, HTMLElement>;
 
   private __tokens: Token[] = parsePattern(DEFAULT_FORMAT);
+  /** Parts explicitly picked in the popup since it opened (for closeOnComplete). */
+  private __pickedParts = new Set<string>();
   private __keepInputValue = false;
   private _tooltipController?: TooltipController;
   private __violation: 'badInput' | 'required' | 'min' | 'max' | 'dateDisabled' | null = null;
@@ -256,6 +265,18 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
         sync: true,
       },
 
+      /**
+       * When true (with `autoApply`), the popup closes automatically once
+       * every part offered by the format — the date and each visible time
+       * part — has been picked since the popup opened. Gives instant-apply
+       * pickers (which have no OK button) a natural end to the flow.
+       */
+      closeOnComplete: {
+        type: Boolean,
+        value: false,
+        sync: true,
+      },
+
       /** Hides the OK button of the action bar. */
       okButtonHidden: {
         type: Boolean,
@@ -339,6 +360,19 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     };
   }
 
+  /**
+   * Keep the base styles when Lumo modules are injected (see
+   * lumo-adaptation.ts): Lumo's field modules were written to replace
+   * Vaadin's own components' base styles wholesale, but this component's
+   * base styles carry structure Lumo knows nothing about. The adaptation
+   * module compensates for the overlaps (icon masks vs. font glyphs).
+   * @protected
+   * @override
+   */
+  static get lumoInjector() {
+    return { is: this.is, includeBaseStyles: true };
+  }
+
   static get styles() {
     return [
       inputFieldShared,
@@ -346,12 +380,25 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
         /* Wider default than the shared 12em: a date-time value (e.g.
            "15.07.2026 03:37") doesn't fit a single-field width. Apps
            setting --vaadin-field-default-width still control it. */
-        .date-time-combo-picker-container {
+        [part='input-field'] {
           width: var(--vaadin-field-default-width, 14em);
         }
 
-        [part~='toggle-button'] {
-          cursor: pointer;
+        /* Icon rendering: with a Lumo theme active, injected Lumo modules
+           (see lumo-adaptation.ts) draw these buttons as font glyphs. A set
+           --lumo-icons-* glyph string is an invalid <image>/<background>,
+           which resets these properties (IACVT), clearing the base SVG
+           mask in the glyph's favor. Without Lumo the fallbacks apply. */
+        [part$='button']::before {
+          background: var(--lumo-icons-calendar, currentColor);
+        }
+
+        [part~='toggle-button']::before {
+          mask-image: var(--lumo-icons-calendar, var(--_vaadin-icon-calendar));
+        }
+
+        [part~='clear-button']::before {
+          mask-image: var(--lumo-icons-cross, var(--_vaadin-icon-cross));
         }
       `,
     ];
@@ -718,16 +765,36 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
 
   /**
    * Override a method from `FocusMixin`: moving focus into the popup
-   * (keyboard navigation in the calendar) must not blur the field.
+   * (keyboard navigation in the calendar, clicks on popup buttons) must
+   * not blur the field. While the popup is open, only focus landing on a
+   * real element outside both the field and the popup counts as leaving:
+   * `null`/`document.body` happens transiently when a focused popup
+   * element is re-rendered away (e.g. selecting a year closes the year
+   * grid), and in Vaadin 25 the overlay lives in this element's shadow
+   * root, so a focus move into it retargets to this element itself.
+   *
+   * Focus leaving the document entirely (an iframe, browser UI) also
+   * reports `relatedTarget: null`, indistinguishable from the transient
+   * case here — so that case is resolved asynchronously: if the document
+   * has genuinely lost focus a moment later, the typed text is committed
+   * and the popup closed, like any other blur.
    * @protected
    * @override
    */
   _shouldRemoveFocus(event: FocusEvent): boolean {
     const related = event.relatedTarget as Node | null;
-    if (related && this.$ && this.$.overlay.contains(related)) {
+    if (!this.opened) {
+      return true;
+    }
+    if (related === null || related === document.body) {
+      setTimeout(() => {
+        if (this.opened && this.hasAttribute('focused') && !document.hasFocus()) {
+          this._setFocused(false);
+        }
+      });
       return false;
     }
-    return true;
+    return !this.contains(related) && !(this.$ && this.$.overlay.contains(related));
   }
 
   /** @private */
@@ -775,6 +842,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       return;
     }
     this.inputElement?.setAttribute('aria-expanded', String(opened));
+    this.__pickedParts.clear();
     if (opened) {
       requestAnimationFrame(() => {
         const content = this.$.overlayContent as DtcpOverlayContent;
@@ -924,11 +992,13 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
     if (this.autoApply && !this._timeConfig.hasTime) {
       // Plain date pattern: behave like a date picker and close on selection
       this.close();
+      return;
     }
+    this.__trackPickedPart('date');
   }
 
   /** @private */
-  __onTimeSelected(event: CustomEvent<TimeValue>) {
+  __onTimeSelected(event: CustomEvent<TimeValue & { changedPart?: string; stepped?: boolean }>) {
     const time = event.detail;
     const base = this.__currentParts() ?? this.__referenceParts();
     const parts: DateTimeParts = {
@@ -940,6 +1010,37 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       seconds: time.seconds,
     };
     this.__applyParts(parts);
+    // Arrow-key stepping (`stepped`) adjusts the value without counting as a
+    // pick: closing on the first keystroke would make values beyond one step
+    // unreachable by keyboard
+    if (time.changedPart && !time.stepped) {
+      this.__trackPickedPart(time.changedPart);
+    }
+  }
+
+  /**
+   * Records an explicitly picked part and, with `closeOnComplete` in
+   * auto-apply mode, closes the popup once every part the format offers
+   * (the date and each visible time part, including AM/PM in 12-hour
+   * formats) has been picked since the popup opened.
+   * @private
+   */
+  __trackPickedPart(part: string) {
+    this.__pickedParts.add(part);
+    if (!this.closeOnComplete || !this.autoApply || !this.opened) {
+      return;
+    }
+    const config = this._timeConfig;
+    const required = [
+      config.hasDate ? 'date' : null,
+      config.showHours ? 'hours' : null,
+      config.showMinutes ? 'minutes' : null,
+      config.showSeconds ? 'seconds' : null,
+      config.showMeridiem ? 'meridiem' : null,
+    ].filter((p): p is string => p !== null);
+    if (required.every((p) => this.__pickedParts.has(p))) {
+      this.close();
+    }
   }
 
   /** @private */

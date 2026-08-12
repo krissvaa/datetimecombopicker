@@ -326,6 +326,15 @@ The component follows the Vaadin 25 styling model: it ships complete
 usable monochrome look with no theme, and adopts the application theme's
 tokens automatically (typography, colors, radii, focus ring).
 
+With the **Lumo** theme loaded, the field goes one step further: it
+registers with Vaadin's Lumo style-injection mechanism and receives the
+same Lumo field modules as `vaadin-date-picker` — Lumo's calendar/cross
+font glyphs instead of the base SVG icons, Lumo label and helper
+typography, and Lumo's default field width. This happens automatically
+whenever a Lumo stylesheet is present in the document and is dropped
+again if the theme is removed at runtime. Aura and custom themes style
+the component purely through the `--vaadin-*` tokens.
+
 The **selection accent** (selected date/time, OK button, active tab,
 Today) follows the theme's date-picker accent so the popup matches the
 app's date pickers out of the box:
@@ -378,6 +387,12 @@ The clock face size can be adjusted with `--_face-size` on `dtcp-time-clock`.
 - The popup composes the public `@vaadin/overlay` mixins; the field chrome
   comes from `@vaadin/field-base` — the same building blocks Vaadin's own
   pickers use.
+- **Lumo adoption uses `LumoInjectionMixin`** (`@vaadin/vaadin-themable-mixin`),
+  the mechanism Vaadin's own components use to receive Lumo's per-component
+  CSS, with a mapping that reuses the modules Lumo ships for
+  `vaadin-date-picker` (see `src/lumo-adaptation.ts`). The mixin is not
+  public API, so it's a known upgrade-sensitivity: the CI matrix pins the
+  platform versions it is verified against.
 - Deliberate deviations from upstream in the forked calendar: `render()`
   falls back to empty arrays for not-yet-computed properties (upstream does
   not guard), date cells get `isolation: isolate` so their `z-index: -1`

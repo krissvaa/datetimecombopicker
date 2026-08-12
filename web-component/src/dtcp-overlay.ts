@@ -90,6 +90,8 @@ class DtcpOverlay extends PositionMixin(OverlayMixin(DirMixin(ThemableMixin(Poly
   /** Shadow-root id map provided by PolylitMixin. */
   declare $: Record<string, HTMLElement>;
 
+  declare fullscreen: boolean;
+
   static get is() {
     return 'dtcp-overlay';
   }
@@ -98,13 +100,42 @@ class DtcpOverlay extends PositionMixin(OverlayMixin(DirMixin(ThemableMixin(Poly
     return [overlayStyles, dtcpOverlayStyles];
   }
 
+  static get properties() {
+    return {
+      /** Bottom-sheet (mobile) mode; set by the owner via the attribute. */
+      fullscreen: {
+        type: Boolean,
+        observer: '__fullscreenChanged',
+      },
+    };
+  }
+
+  /**
+   * The mode can flip while the popup is open (rotating a phone across the
+   * fullscreen threshold). The visualViewport resize that drives the
+   * position mixin fires before the MediaQueryList change that flips this
+   * attribute, so the mixin has already repositioned for the old mode —
+   * re-run for the new one: entering fullscreen strips the stale inline
+   * anchoring (which would beat the bottom-sheet stylesheet), leaving it
+   * re-anchors the popup to the field.
+   * @private
+   */
+  __fullscreenChanged(fullscreen: boolean, oldFullscreen?: boolean) {
+    // oldFullscreen is undefined until the attribute first appears
+    if (!(this as any).opened || Boolean(fullscreen) === Boolean(oldFullscreen)) {
+      return;
+    }
+    this._updatePosition();
+  }
+
   /**
    * Override a method from `PositionMixin`: while in fullscreen (mobile
    * bottom sheet) mode the stylesheet owns the layout, so skip the popup
    * anchoring — the mixin writes inline styles (top/left and flex
    * justification) on the host that would misplace the sheet. Any inline
-   * styles written before entering fullscreen are dropped; the flip back
-   * to a popup re-runs the anchoring on the next update.
+   * styles written before entering fullscreen are dropped; the
+   * `__fullscreenChanged` observer re-runs this on every mode flip while
+   * open, so entering fullscreen cleans up and leaving re-anchors.
    * @protected
    * @override
    */

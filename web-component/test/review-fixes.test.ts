@@ -74,6 +74,34 @@ describe('overlay outside-click ownership', () => {
   });
 });
 
+describe('fullscreen flip while open', () => {
+  it('drops stale inline anchoring when entering fullscreen and re-anchors on the way out', async () => {
+    const picker = await pickerFixture();
+    picker.value = '2026-07-15T13:05:00';
+    await open(picker);
+    const overlay = picker.$.overlay as HTMLElement & { _updatePosition(): void };
+    // Popup mode: the position mixin anchors with inline styles
+    overlay._updatePosition();
+    expect(overlay.style.top).to.not.equal('');
+
+    // Rotating across the threshold: the resize tick repositioned already
+    // (above); then the media query flips fullscreen — the stale inline
+    // anchoring must not beat the bottom-sheet stylesheet
+    (picker as any)._fullscreen = true;
+    await nextFrame();
+    expect(overlay.hasAttribute('fullscreen')).to.be.true;
+    expect(overlay.style.top).to.equal('');
+    expect(overlay.style.justifyContent).to.equal('');
+
+    // Flipping back must re-anchor to the field, not leave the popup
+    // floating at the default flex position
+    (picker as any)._fullscreen = false;
+    await nextFrame();
+    expect(overlay.hasAttribute('fullscreen')).to.be.false;
+    expect(overlay.style.top).to.not.equal('');
+  });
+});
+
 describe('keyboard selection on range boundaries', () => {
   it('selects the max-boundary day with Enter when the value has a time', async () => {
     const picker = await pickerFixture(

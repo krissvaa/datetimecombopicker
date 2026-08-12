@@ -5,13 +5,15 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The Vaadin version for the demo server can be overridden with the
  * VAADIN_VERSION environment variable (defaults to the add-on's minimum
- * supported platform version).
+ * supported platform version, 25.1.11 — the same version the CI matrix
+ * exercises alongside the latest).
  *
- * Set VAADIN_PRODUCTION=true to run the demo in production mode. CI uses
- * this: since Vaadin 24.10, dev mode requires a signed-in Vaadin account
- * (license checker), which would block a headless build server.
+ * Set VAADIN_PRODUCTION=true to run the demo in production mode. Dev mode
+ * requires a signed-in Vaadin account (license checker) on every supported
+ * version, which blocks headless runs: CI always sets this, and local runs
+ * without a signed-in account need it too.
  */
-const vaadinVersion = process.env.VAADIN_VERSION ?? '25.2.6';
+const vaadinVersion = process.env.VAADIN_VERSION ?? '25.1.11';
 const productionMode = process.env.VAADIN_PRODUCTION === 'true';
 
 export default defineConfig({

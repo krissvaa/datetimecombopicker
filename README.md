@@ -181,7 +181,7 @@ mvn install -Pdirectory   # build the Vaadin Directory zip (target/*.zip)
 # Integration tests: drive the demo app in Chromium (starts jetty automatically)
 cd it
 npm install
-npm test           # VAADIN_VERSION=24.10.8 npm test to run against another platform
+npm test           # VAADIN_VERSION=25.2.6 npm test to run against another platform
 ```
 
 CI (GitHub Actions) runs the web-component tests, `mvn verify` against the minimum
@@ -189,7 +189,7 @@ CI (GitHub Actions) runs the web-component tests, `mvn verify` against the minim
 
 The Flow jar bundles the compiled web component under `META-INF/frontend`, so the
 add-on has no npm-publication dependency; bare imports (`lit`, `@vaadin/*`) resolve
-against the consuming application's Vaadin 24 platform packages.
+against the consuming application's Vaadin 25 platform packages.
 
 ## Architecture notes
 

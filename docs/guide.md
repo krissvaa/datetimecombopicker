@@ -403,7 +403,7 @@ mvn test
 # End-to-end tests (starts the demo server itself)
 cd it
 npm install
-npm test           # VAADIN_VERSION=25.1.11 npm test for another platform version
+npm test           # VAADIN_VERSION=25.2.6 npm test for another platform version
 
 # Vaadin Directory package
 cd flow

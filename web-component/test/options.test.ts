@@ -296,6 +296,24 @@ describe('action bar (staged by default)', () => {
     expect(picker.opened).to.be.false;
   });
 
+  it('close-on-complete requires the meridiem in 12-hour formats', async () => {
+    const picker = await pickerFixture(
+      html`<date-time-combo-picker auto-apply close-on-complete format="h:mm a"></date-time-combo-picker>`,
+    );
+    await open(picker);
+    timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="hours"] [data-value="2"]')!.click();
+    await nextFrame();
+    timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="minutes"] [data-value="30"]')!.click();
+    await nextFrame();
+    // AM/PM is still unpicked — closing here would silently commit the
+    // default meridiem, 12 hours off when the user wanted the other one
+    expect(picker.opened).to.be.true;
+    timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="meridiem"] [data-value="pm"]')!.click();
+    await nextFrame();
+    expect(picker.opened).to.be.false;
+    expect(picker.value).to.match(/T14:30:00$/);
+  });
+
   it('close-on-complete ignores arrow-key stepping in the time columns', async () => {
     const picker = await pickerFixture(
       html`<date-time-combo-picker auto-apply close-on-complete format="HH:mm"></date-time-combo-picker>`,

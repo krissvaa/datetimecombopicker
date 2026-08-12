@@ -983,8 +983,8 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   /**
    * Records an explicitly picked part and, with `closeOnComplete` in
    * auto-apply mode, closes the popup once every part the format offers
-   * (the date and each visible time part; AM/PM not required) has been
-   * picked since the popup opened.
+   * (the date and each visible time part, including AM/PM in 12-hour
+   * formats) has been picked since the popup opened.
    * @private
    */
   __trackPickedPart(part: string) {
@@ -998,6 +998,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       config.showHours ? 'hours' : null,
       config.showMinutes ? 'minutes' : null,
       config.showSeconds ? 'seconds' : null,
+      config.showMeridiem ? 'meridiem' : null,
     ].filter((p): p is string => p !== null);
     if (required.every((p) => this.__pickedParts.has(p))) {
       this.close();

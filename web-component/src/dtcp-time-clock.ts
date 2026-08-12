@@ -718,11 +718,11 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
   __setMeridiem(pm: boolean) {
     const display = this.__displayTime();
     const hours = (display.hours % 12) + (pm ? 12 : 0);
-    if (hours !== display.hours || this.value === null) {
-      const next: TimeValue = { ...display, hours };
-      this.value = next;
-      this.dispatchEvent(new CustomEvent('time-changed', { detail: { ...next, changedPart: 'meridiem' } }));
-    }
+    const next: TimeValue = { ...display, hours };
+    this.value = next;
+    // Dispatch even when the hours are unchanged: confirming the already
+    // active meridiem is still a pick that closeOnComplete must count
+    this.dispatchEvent(new CustomEvent('time-changed', { detail: { ...next, changedPart: 'meridiem' } }));
   }
 }
 

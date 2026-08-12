@@ -17,12 +17,14 @@ no `ss` in the pattern → no seconds column, no `mm` → no minutes column,
 | ![Action bar](docs/img/action-bar.png) | ![Fullscreen](docs/img/fullscreen.png) | ![Analog clock](docs/img/clock.png) |
 
 The component ships Vaadin 25 base styles and follows the application theme
-through the `--vaadin-*` design tokens — the same picker with no theme, with
-Aura, and with Aura in dark mode (the shots above use Lumo):
+through the `--vaadin-*` design tokens; when the Lumo theme is loaded it
+additionally adopts Lumo's field styling (icons, typography) the same way
+Vaadin's own pickers do — the same picker with no theme, with Aura, and
+with Lumo in dark mode (the shots above use Lumo, light):
 
-| Base (no theme) | Aura | Aura, dark |
+| Base (no theme) | Aura | Lumo, dark |
 | --- | --- | --- |
-| ![Base](docs/img/theme-base.png) | ![Aura](docs/img/theme-aura.png) | ![Aura dark](docs/img/theme-aura-dark.png) |
+| ![Base](docs/img/theme-base.png) | ![Aura](docs/img/theme-aura.png) | ![Lumo dark](docs/img/theme-lumo-dark.png) |
 
 This is a mono-repo with two packages:
 

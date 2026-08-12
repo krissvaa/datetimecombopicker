@@ -403,7 +403,7 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
   }
 
   /** @private */
-  __select(kind: ColumnKind, itemValue: number | string) {
+  __select(kind: ColumnKind, itemValue: number | string, stepped = false) {
     const current: TimeValue = this.value ?? this.fallbackValue ?? { hours: 0, minutes: 0, seconds: 0 };
     const next: TimeValue = { ...current };
 
@@ -434,7 +434,7 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
     }
 
     this.value = next;
-    this.dispatchEvent(new CustomEvent('time-changed', { detail: { ...next, changedPart: kind } }));
+    this.dispatchEvent(new CustomEvent('time-changed', { detail: { ...next, changedPart: kind, stepped } }));
     // Re-render happens synchronously enough for smooth scroll on next frame
     requestAnimationFrame(() => this.scrollToValue());
   }
@@ -466,7 +466,9 @@ class TimeColumns extends ThemableMixin(PolylitMixin(LitElement)) {
 
     event.preventDefault();
     if (nextIndex !== null && nextIndex !== currentIndex) {
-      this.__select(kind, items[nextIndex].value);
+      // Arrow-key adjustment: `stepped` keeps closeOnComplete from closing
+      // the popup after the first keystroke in the last unpicked part
+      this.__select(kind, items[nextIndex].value, true);
     }
   }
 }

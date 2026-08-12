@@ -682,14 +682,16 @@ class TimeClock extends ThemableMixin(PolylitMixin(LitElement)) {
 
     event.preventDefault();
     event.stopPropagation();
-    this.__commitActiveValue(next, false);
+    this.__commitActiveValue(next, false, true);
   }
 
   /** @private */
-  __commitActiveValue(selected: number, advance: boolean) {
+  __commitActiveValue(selected: number, advance: boolean, stepped = false) {
     const next: TimeValue = { ...this.__displayTime(), [this._activeView]: selected };
     this.value = next;
-    this.dispatchEvent(new CustomEvent('time-changed', { detail: { ...next, changedPart: this._activeView } }));
+    this.dispatchEvent(
+      new CustomEvent('time-changed', { detail: { ...next, changedPart: this._activeView, stepped } }),
+    );
 
     if (advance && !this.autoAdvanceDisabled) {
       const views = this.__views();

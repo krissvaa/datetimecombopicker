@@ -960,7 +960,7 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
   }
 
   /** @private */
-  __onTimeSelected(event: CustomEvent<TimeValue & { changedPart?: string }>) {
+  __onTimeSelected(event: CustomEvent<TimeValue & { changedPart?: string; stepped?: boolean }>) {
     const time = event.detail;
     const base = this.__currentParts() ?? this.__referenceParts();
     const parts: DateTimeParts = {
@@ -972,7 +972,10 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
       seconds: time.seconds,
     };
     this.__applyParts(parts);
-    if (time.changedPart) {
+    // Arrow-key stepping (`stepped`) adjusts the value without counting as a
+    // pick: closing on the first keystroke would make values beyond one step
+    // unreachable by keyboard
+    if (time.changedPart && !time.stepped) {
       this.__trackPickedPart(time.changedPart);
     }
   }

@@ -296,6 +296,30 @@ describe('action bar (staged by default)', () => {
     expect(picker.opened).to.be.false;
   });
 
+  it('close-on-complete ignores arrow-key stepping in the time columns', async () => {
+    const picker = await pickerFixture(
+      html`<date-time-combo-picker auto-apply close-on-complete format="HH:mm"></date-time-combo-picker>`,
+    );
+    await open(picker);
+    timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="hours"] [data-value="9"]')!.click();
+    await nextFrame();
+    const minutes = timeColumns(picker).shadowRoot!.querySelector<HTMLElement>('[data-column="minutes"]')!;
+    minutes.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, composed: true }));
+    await nextFrame();
+    // Stepping adjusts the value but must not complete the selection —
+    // otherwise minutes beyond the first step are unreachable by keyboard
+    expect(picker.value).to.match(/T09:01:00$/);
+    expect(picker.opened).to.be.true;
+    minutes.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, composed: true }));
+    await nextFrame();
+    expect(picker.value).to.match(/T09:02:00$/);
+    expect(picker.opened).to.be.true;
+    minutes.querySelector<HTMLElement>('[data-value="30"]')!.click();
+    await nextFrame();
+    expect(picker.opened).to.be.false;
+    expect(picker.value).to.match(/T09:30:00$/);
+  });
+
   it('does not close a date-only picker on selection when staging', async () => {
     const picker = await pickerFixture(
       html`<date-time-combo-picker format="dd.MM.yyyy"></date-time-combo-picker>`,

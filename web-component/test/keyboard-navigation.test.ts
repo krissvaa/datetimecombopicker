@@ -150,6 +150,56 @@ describe('calendar keyboard navigation', () => {
     expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: document.body }))).to.be.true;
   });
 
+  it('moves focus to the time selector after selecting a date with Enter', async () => {
+    const picker = await openedPicker();
+    await content(picker).focusDateCell();
+    const cal = calendar(picker);
+    key(cal, 'ArrowRight');
+    // Let the roving calendar focus settle, like between real key presses
+    await nextFrame();
+    key(cal, 'Enter');
+    await nextFrame();
+    await nextFrame();
+    const columns = content(picker).shadowRoot!.querySelector('dtcp-time-columns')!;
+    const active = columns.shadowRoot!.activeElement as HTMLElement | null;
+    expect(active).to.not.be.null;
+    expect(active!.getAttribute('part')).to.include('column');
+  });
+
+  it('moves focus to the time selector when re-confirming the selected date', async () => {
+    const picker = await openedPicker();
+    await content(picker).focusDateCell();
+    const cal = calendar(picker);
+    key(cal, 'Enter'); // focused date === selected date, no date-selected fired
+    await nextFrame();
+    await nextFrame();
+    expect(picker.value).to.equal('2026-07-15T13:05:00');
+    const columns = content(picker).shadowRoot!.querySelector('dtcp-time-columns')!;
+    expect(columns.shadowRoot!.activeElement).to.not.be.null;
+  });
+
+  it('keeps focus in the calendar for a date-only format', async () => {
+    const picker = await fixture<DateTimeComboPicker>(
+      html`<date-time-combo-picker format="dd.MM.yyyy"></date-time-combo-picker>`,
+    );
+    await nextFrame();
+    picker.value = '2026-07-15T00:00:00';
+    picker.open();
+    await nextFrame();
+    await nextFrame();
+    await content(picker).focusDateCell();
+    const cal = calendar(picker);
+    key(cal, 'ArrowRight');
+    key(cal, 'Enter');
+    await nextFrame();
+    await nextFrame();
+    // No time selector to advance to; staged mode keeps the popup open
+    expect(picker.opened).to.be.true;
+    const timeSection = content(picker).shadowRoot!.querySelector<HTMLElement>('[part="time-section"]')!;
+    expect(timeSection.hidden).to.be.true;
+    expect(cal.shadowRoot!.activeElement, 'focus stays on a date cell').to.not.be.null;
+  });
+
   it('commits typed text and closes when focus leaves the document', async () => {
     const picker = await openedPicker();
     picker.setAttribute('focused', '');

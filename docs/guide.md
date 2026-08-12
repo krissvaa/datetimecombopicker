@@ -289,7 +289,7 @@ In the calendar:
 | <kbd>PageUp</kbd> / <kbd>PageDown</kbd> | previous / next month |
 | <kbd>Shift</kbd>+<kbd>PageUp</kbd> / <kbd>PageDown</kbd> | previous / next year |
 | <kbd>Home</kbd> / <kbd>End</kbd> | first / last day of the month |
-| <kbd>Enter</kbd> / <kbd>Space</kbd> | select the focused date |
+| <kbd>Enter</kbd> / <kbd>Space</kbd> | select the focused date and move focus to the time selector (when the format has time parts) |
 | <kbd>Escape</kbd> | close the popup, focus returns to the field |
 
 In the year grid (opened from the month-year header): arrows move by one

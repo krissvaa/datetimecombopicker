@@ -1167,6 +1167,27 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
     await this.focusDateCell();
   }
 
+  /**
+   * After a keyboard date selection, move focus onto the time selector so
+   * the time parts can be picked without tabbing — the keyboard
+   * counterpart of the analog clock's pointer auto-advance. Skipped when
+   * the format has no time parts and when the selection just closed the
+   * popup (autoApply + closeOnComplete). In the mobile tabs layout this
+   * also switches to the time tab, like a date tap does.
+   * @private
+   */
+  async __focusTimeAfterDateSelection() {
+    const overlay = this.parentElement as { opened?: boolean } | null;
+    if (!this.timeConfig.hasTime || overlay?.opened === false) {
+      return;
+    }
+    if (this.__tabsActive()) {
+      this.__setActiveTab('time');
+    }
+    await this.updateComplete;
+    this.focusTimeColumns();
+  }
+
   /** @private */
   __onCalendarKeyDown(event: KeyboardEvent) {
     const rtl = getComputedStyle(this).direction === 'rtl';
@@ -1206,12 +1227,12 @@ class DtcpOverlayContent extends ThemableMixin(PolylitMixin(LitElement)) {
       case 'Enter':
       case ' ': {
         const date = this.focusedDate;
-        if (
-          date &&
-          dateAllowed(date, this.minDate, this.maxDate, this.isDateDisabled) &&
-          !dateEquals(date, this.selectedDate)
-        ) {
-          this.dispatchEvent(new CustomEvent('date-selected', { detail: { date } }));
+        if (date && dateAllowed(date, this.minDate, this.maxDate, this.isDateDisabled)) {
+          if (!dateEquals(date, this.selectedDate)) {
+            this.dispatchEvent(new CustomEvent('date-selected', { detail: { date } }));
+          }
+          // Confirming the already-selected date advances too
+          this.__focusTimeAfterDateSelection();
         }
         break;
       }

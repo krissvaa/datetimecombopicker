@@ -742,21 +742,29 @@ class DateTimeComboPicker extends InputControlMixin(ThemableMixin(ElementMixin(P
    * element is re-rendered away (e.g. selecting a year closes the year
    * grid), and in Vaadin 25 the overlay lives in this element's shadow
    * root, so a focus move into it retargets to this element itself.
+   *
+   * Focus leaving the document entirely (an iframe, browser UI) also
+   * reports `relatedTarget: null`, indistinguishable from the transient
+   * case here — so that case is resolved asynchronously: if the document
+   * has genuinely lost focus a moment later, the typed text is committed
+   * and the popup closed, like any other blur.
    * @protected
    * @override
    */
   _shouldRemoveFocus(event: FocusEvent): boolean {
     const related = event.relatedTarget as Node | null;
-    if (
-      this.opened &&
-      related !== null &&
-      related !== document.body &&
-      !this.contains(related) &&
-      !(this.$ && this.$.overlay.contains(related))
-    ) {
+    if (!this.opened) {
       return true;
     }
-    return !this.opened;
+    if (related === null || related === document.body) {
+      setTimeout(() => {
+        if (this.opened && this.hasAttribute('focused') && !document.hasFocus()) {
+          this._setFocused(false);
+        }
+      });
+      return false;
+    }
+    return !this.contains(related) && !(this.$ && this.$.overlay.contains(related));
   }
 
   /** @private */

@@ -149,6 +149,27 @@ describe('calendar keyboard navigation', () => {
     await new Promise((resolve) => requestAnimationFrame(resolve));
     expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: document.body }))).to.be.true;
   });
+
+  it('commits typed text and closes when focus leaves the document', async () => {
+    const picker = await openedPicker();
+    picker.setAttribute('focused', '');
+    const input = picker.inputElement as HTMLInputElement;
+    input.value = '20.07.2026 10:15';
+    input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    // Focus moving into an iframe or the browser UI reports
+    // relatedTarget null, like a transient popup re-render — but the
+    // document loses focus, which the deferred check picks up
+    const originalHasFocus = document.hasFocus;
+    document.hasFocus = () => false;
+    try {
+      expect(picker._shouldRemoveFocus(new FocusEvent('focusout', { relatedTarget: null }))).to.be.false;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      expect(picker.opened).to.be.false;
+      expect(picker.value).to.equal('2026-07-20T10:15:00');
+    } finally {
+      document.hasFocus = originalHasFocus;
+    }
+  });
 });
 
 describe('year navigation', () => {

@@ -2,7 +2,7 @@
 
 A combined date & time picker: a single field with a `LocalDateTime` value and a
 single popup containing a month calendar and a time selector. Available as a
-[Vaadin Flow](#using-with-vaadin-flow) component (`org.vaadin.addons:datetimecombopicker`)
+[Vaadin Flow](#using-with-vaadin-flow) component (`org.vaadin.addons.krissvaa:datetimecombopicker`)
 and as a standalone [web component](#using-the-web-component) (npm `date-time-combo-picker`).
 
 - [Core concepts](#core-concepts)
@@ -54,7 +54,7 @@ Requires Vaadin 24.4+ and Java 17.
 
 ```xml
 <dependency>
-    <groupId>org.vaadin.addons</groupId>
+    <groupId>org.vaadin.addons.krissvaa</groupId>
     <artifactId>datetimecombopicker</artifactId>
     <version>1.0.0</version>
 </dependency>

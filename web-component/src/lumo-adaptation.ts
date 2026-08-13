@@ -4,7 +4,18 @@
  * This program is available under Apache License Version 2.0.
  */
 import { css } from 'lit';
-import { addGlobalStyles } from '@vaadin/component-base/src/css-utils.js';
+
+/**
+ * Adds a style block to the document head. Equivalent to component-base's
+ * `addGlobalStyles`, inlined because that module only exists from platform
+ * 25.1.6 on — importing it broke apps on earlier 25.1 patches.
+ */
+function addGlobalStyles(id: string, styles: { toString(): string }): void {
+  const styleTag = document.createElement('style');
+  styleTag.id = id;
+  styleTag.textContent = styles.toString();
+  document.head.insertAdjacentElement('afterbegin', styleTag);
+}
 
 /**
  * Registers `<date-time-combo-picker>` with Vaadin's Lumo style-injection

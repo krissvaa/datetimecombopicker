@@ -4,9 +4,9 @@ import { defineConfig, devices } from '@playwright/test';
  * Integration tests against the Flow demo application.
  *
  * The Vaadin version for the demo server can be overridden with the
- * VAADIN_VERSION environment variable (defaults to the add-on's minimum
- * supported platform version, 25.1.11 — the same version the CI matrix
- * exercises alongside the latest).
+ * VAADIN_VERSION environment variable (defaults to 25.1.11; the CI matrix
+ * additionally exercises the oldest patch of each supported line and the
+ * latest — see .github/workflows/ci.yml).
  *
  * Set VAADIN_PRODUCTION=true to run the demo in production mode. Dev mode
  * requires a signed-in Vaadin account (license checker) on every supported

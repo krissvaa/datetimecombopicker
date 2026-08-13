@@ -16,8 +16,3 @@ declare module '@vaadin/vaadin-themable-mixin/lumo-injection-mixin.js' {
   export function LumoInjectionMixin<T extends Constructor<object>>(base: T): T;
 }
 
-declare module '@vaadin/component-base/src/css-utils.js' {
-  import type { CSSResultGroup } from 'lit';
-  export function addGlobalStyles(id: string, ...styles: CSSResultGroup[]): void;
-}
-

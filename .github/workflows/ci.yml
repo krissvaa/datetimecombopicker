@@ -30,8 +30,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Minimum supported V25 platform and current latest
-        vaadin: ['25.1.11', '25.2.6']
+        # Oldest patch of each supported line (25.0.1 was never released)
+        # and the current latest
+        vaadin: ['25.0.2', '25.1.0', '25.2.6']
     defaults:
       run:
         working-directory: flow
@@ -69,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        vaadin: ['25.1.11', '25.2.6']
+        vaadin: ['25.0.2', '25.1.0', '25.2.6']
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5

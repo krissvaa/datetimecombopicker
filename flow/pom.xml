@@ -6,7 +6,7 @@
 
     <groupId>org.vaadin.addons</groupId>
     <artifactId>datetimecombopicker</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>DateTimeComboPicker</name>
     <description>
         A combined date and time picker for Vaadin Flow: a single field with a LocalDateTime

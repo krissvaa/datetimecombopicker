@@ -31,13 +31,13 @@ This is a mono-repo with two packages:
 | Package | Artifact | For |
 | --- | --- | --- |
 | [`web-component/`](web-component) | npm `date-time-combo-picker` | Any web app (Lit-based web component) |
-| [`flow/`](flow) | Maven `org.vaadin.addons:datetimecombopicker` | Vaadin Flow 25.1+ (Java 21) |
+| [`flow/`](flow) | Maven `org.vaadin.addons.krissvaa:datetimecombopicker` | Vaadin Flow 25.1+ (Java 21) |
 
 ## Vaadin Flow usage
 
 ```xml
 <dependency>
-    <groupId>org.vaadin.addons</groupId>
+    <groupId>org.vaadin.addons.krissvaa</groupId>
     <artifactId>datetimecombopicker</artifactId>
     <version>2.0.0</version>
 </dependency>

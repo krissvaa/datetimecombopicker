@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.vaadin.addons.datetimecombopicker;
+package org.vaadin.addons.krissvaa.datetimecombopicker;
 
 /**
  * The time selector shown in the {@link DateTimeComboPicker} popup.

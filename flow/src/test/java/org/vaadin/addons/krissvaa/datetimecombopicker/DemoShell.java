@@ -1,4 +1,4 @@
-package org.vaadin.addons.datetimecombopicker;
+package org.vaadin.addons.krissvaa.datetimecombopicker;
 
 import com.vaadin.flow.component.page.AppShellConfigurator;
 
